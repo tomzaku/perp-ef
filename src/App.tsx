@@ -1,0 +1,232 @@
+import { useMemo } from 'react';
+import { Routes, Route, useParams } from 'react-router-dom';
+import type { Question } from './types/question';
+import { allQuestions, studyPlan, learningPaths } from './data';
+import { useProgress } from './hooks/useProgress';
+import { useNotes } from './hooks/useNotes';
+import { useTheme } from './hooks/useTheme';
+import { ThemeContext } from './hooks/ThemeContext';
+import { Sidebar } from './components/Sidebar';
+import { StudyPlanView } from './components/StudyPlanView';
+import { QuestionDetail } from './components/QuestionDetail';
+import { QuestionListPage } from './components/QuestionListPage';
+import { PathList, PathDetail } from './components/LearningPathView';
+
+function QuestionPage() {
+  const { id } = useParams<{ id: string }>();
+  const {
+    toggleCompleted,
+    toggleBookmarked,
+    isCompleted,
+    isBookmarked,
+  } = useProgress();
+  const { getNotes, addNote, updateNote, deleteNote } = useNotes();
+
+  const question = allQuestions.find((q) => q.id === id);
+
+  if (!question) {
+    return (
+      <div className="text-center py-16 text-text-muted">
+        <p className="text-lg mb-2">Question not found</p>
+        <p className="text-sm">ID: {id}</p>
+      </div>
+    );
+  }
+
+  return (
+    <QuestionDetail
+      question={question}
+      isCompleted={isCompleted(question.id)}
+      isBookmarked={isBookmarked(question.id)}
+      onToggleCompleted={() => toggleCompleted(question.id)}
+      onToggleBookmarked={() => toggleBookmarked(question.id)}
+      notes={getNotes(question.id)}
+      onAddNote={addNote}
+      onUpdateNote={updateNote}
+      onDeleteNote={deleteNote}
+    />
+  );
+}
+
+function App() {
+  const themeValue = useTheme();
+  const {
+    completedCount,
+    toggleCompleted,
+    toggleBookmarked,
+    isCompleted,
+    isBookmarked,
+  } = useProgress();
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allQuestions.forEach((q) => {
+      counts[q.category] = (counts[q.category] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
+  const questionsByCategory = useMemo(() => {
+    const map: Record<string, Question[]> = {};
+    allQuestions.forEach((q) => {
+      if (!map[q.category]) map[q.category] = [];
+      map[q.category].push(q);
+    });
+    return map;
+  }, []);
+
+  const sharedProps = {
+    isCompleted,
+    isBookmarked,
+    toggleCompleted,
+    toggleBookmarked,
+  };
+
+  return (
+    <ThemeContext value={themeValue}>
+    <div className="flex min-h-screen">
+      <Sidebar
+        counts={categoryCounts}
+        completedCount={completedCount}
+        totalCount={allQuestions.length}
+      />
+
+      <main className="flex-1 p-4 pt-16 lg:p-8 lg:pt-8 overflow-y-auto max-h-screen">
+        <Routes>
+          {/* Study Plan */}
+          <Route
+            path="/"
+            element={
+              <StudyPlanView
+                plan={studyPlan}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+              />
+            }
+          />
+
+          {/* All Questions */}
+          <Route
+            path="/all"
+            element={
+              <QuestionListPage
+                title="All Questions"
+                description="Browse the complete question bank across all categories."
+                questions={allQuestions}
+                {...sharedProps}
+              />
+            }
+          />
+
+          {/* Algorithm - Learning Paths */}
+          <Route
+            path="/algorithm"
+            element={
+              <PathList
+                paths={learningPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+              />
+            }
+          />
+          <Route
+            path="/algorithm/path/:slug"
+            element={
+              <PathDetail
+                paths={learningPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+              />
+            }
+          />
+
+          {/* Category Pages */}
+          <Route
+            path="/javascript"
+            element={
+              <QuestionListPage
+                title="JavaScript"
+                description="Core language concepts — closures, prototypes, event loop, async patterns, and implementations."
+                questions={questionsByCategory['JavaScript'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/nodejs"
+            element={
+              <QuestionListPage
+                title="Node.js"
+                description="Runtime internals — event loop phases, streams, clustering, memory management, and error handling."
+                questions={questionsByCategory['Node.js'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/react"
+            element={
+              <QuestionListPage
+                title="React"
+                description="Hooks internals, Fiber architecture, rendering patterns, and performance optimization."
+                questions={questionsByCategory['React'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/design-system"
+            element={
+              <QuestionListPage
+                title="Design System"
+                description="Building UI component libraries — API design, compound components, theming, tokens, and accessibility."
+                questions={questionsByCategory['Design System'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/design-patterns"
+            element={
+              <QuestionListPage
+                title="Design Patterns"
+                description="OOP principles, SOLID, and Gang of Four patterns applied to JavaScript and frontend code."
+                questions={questionsByCategory['Design Patterns'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/system-design"
+            element={
+              <QuestionListPage
+                title="System Design"
+                description="Architecture topics for frontend engineers — authentication, payments, API design, caching, and real-time systems."
+                questions={questionsByCategory['System Design'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+
+          <Route
+            path="/behavioral"
+            element={
+              <QuestionListPage
+                title="Behavioral"
+                description="Common behavioral interview questions — use the STAR method to structure compelling stories about your experience."
+                questions={questionsByCategory['Behavioral'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+
+          {/* Question Detail */}
+          <Route path="/question/:id" element={<QuestionPage />} />
+        </Routes>
+      </main>
+    </div>
+    </ThemeContext>
+  );
+}
+
+export default App;

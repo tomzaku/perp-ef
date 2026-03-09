@@ -1,0 +1,326 @@
+[
+  {
+    "week": 1,
+    "title": "Arrays, Hashing & Two Pointers",
+    "category": "Algorithm",
+    "topics": [
+      "Hash Maps",
+      "Hash Sets",
+      "Two Pointer Technique",
+      "Sorting"
+    ],
+    "questionIds": [
+      "algo-1",
+      "algo-2",
+      "algo-3",
+      "algo-4",
+      "algo-5",
+      "algo-6",
+      "algo-9",
+      "algo-10"
+    ]
+  },
+  {
+    "week": 2,
+    "title": "Sliding Window, Stack & Binary Search",
+    "category": "Algorithm",
+    "topics": [
+      "Sliding Window",
+      "Monotonic Stack",
+      "Binary Search",
+      "Divide & Conquer"
+    ],
+    "questionIds": [
+      "algo-13",
+      "algo-14",
+      "algo-15",
+      "algo-16",
+      "algo-17",
+      "algo-18",
+      "algo-20",
+      "algo-21"
+    ]
+  },
+  {
+    "week": 3,
+    "title": "Linked Lists & Trees",
+    "category": "Algorithm",
+    "topics": [
+      "Linked List Traversal",
+      "Fast & Slow Pointers",
+      "DFS",
+      "BFS",
+      "BST"
+    ],
+    "questionIds": [
+      "algo-23",
+      "algo-24",
+      "algo-25",
+      "algo-26",
+      "algo-27",
+      "algo-28",
+      "algo-29",
+      "algo-30"
+    ]
+  },
+  {
+    "week": 4,
+    "title": "Dynamic Programming & Graphs",
+    "category": "Algorithm",
+    "topics": [
+      "Memoization",
+      "Tabulation",
+      "Graph Traversal",
+      "Topological Sort"
+    ],
+    "questionIds": [
+      "algo-31",
+      "algo-32",
+      "algo-33",
+      "algo-34",
+      "algo-35",
+      "algo-39",
+      "algo-40",
+      "algo-41"
+    ]
+  },
+  {
+    "week": 5,
+    "title": "Hard Problems & Heaps",
+    "category": "Algorithm",
+    "topics": [
+      "Priority Queue",
+      "Two Heaps",
+      "Advanced Stack",
+      "Advanced Two Pointers"
+    ],
+    "questionIds": [
+      "algo-7",
+      "algo-8",
+      "algo-11",
+      "algo-12",
+      "algo-19",
+      "algo-22",
+      "algo-36",
+      "algo-37",
+      "algo-38"
+    ]
+  },
+  {
+    "week": 6,
+    "title": "JavaScript Core Concepts",
+    "category": "JavaScript",
+    "topics": [
+      "Closures",
+      "Prototypes",
+      "this Binding",
+      "Hoisting",
+      "Event Loop"
+    ],
+    "questionIds": [
+      "js-1",
+      "js-2",
+      "js-3",
+      "js-12",
+      "js-13",
+      "js-14"
+    ]
+  },
+  {
+    "week": 7,
+    "title": "JavaScript Patterns & Async",
+    "category": "JavaScript",
+    "topics": [
+      "Debounce/Throttle",
+      "Currying",
+      "Promises",
+      "Generators",
+      "Proxy"
+    ],
+    "questionIds": [
+      "js-4",
+      "js-5",
+      "js-6",
+      "js-7",
+      "js-8",
+      "js-9",
+      "js-10",
+      "js-11"
+    ]
+  },
+  {
+    "week": 8,
+    "title": "Node.js Deep Dive",
+    "category": "Node.js",
+    "topics": [
+      "Event Loop Phases",
+      "Streams",
+      "Clustering",
+      "Error Handling",
+      "Memory"
+    ],
+    "questionIds": [
+      "node-1",
+      "node-2",
+      "node-3",
+      "node-4",
+      "node-5",
+      "node-6",
+      "node-7",
+      "node-8"
+    ]
+  },
+  {
+    "week": 9,
+    "title": "React Core & Hooks",
+    "category": "React",
+    "topics": [
+      "Virtual DOM",
+      "Hooks",
+      "Fiber",
+      "Patterns",
+      "Performance"
+    ],
+    "questionIds": [
+      "react-1",
+      "react-2",
+      "react-3",
+      "react-4",
+      "react-5",
+      "react-7",
+      "react-12",
+      "react-14"
+    ]
+  },
+  {
+    "week": 10,
+    "title": "React Advanced & Design Systems",
+    "category": "React",
+    "topics": [
+      "Suspense",
+      "Error Boundaries",
+      "Server Components",
+      "Concurrent React"
+    ],
+    "questionIds": [
+      "react-6",
+      "react-8",
+      "react-9",
+      "react-10",
+      "react-11",
+      "react-13"
+    ]
+  },
+  {
+    "week": 11,
+    "title": "Design System Fundamentals",
+    "category": "Design System",
+    "topics": [
+      "Component API",
+      "Compound Components",
+      "Theming",
+      "Tokens",
+      "Accessibility"
+    ],
+    "questionIds": [
+      "ds-1",
+      "ds-2",
+      "ds-3",
+      "ds-4",
+      "ds-5",
+      "ds-6",
+      "ds-7",
+      "ds-8",
+      "ds-9"
+    ]
+  },
+  {
+    "week": 12,
+    "title": "OOP & SOLID Principles",
+    "category": "Design Patterns",
+    "topics": [
+      "SOLID",
+      "Encapsulation",
+      "Composition vs Inheritance",
+      "Abstract Classes"
+    ],
+    "questionIds": [
+      "dp-1",
+      "dp-2",
+      "dp-3",
+      "dp-4",
+      "dp-5",
+      "dp-6",
+      "dp-7",
+      "dp-8"
+    ]
+  },
+  {
+    "week": 13,
+    "title": "Design Patterns in JavaScript",
+    "category": "Design Patterns",
+    "topics": [
+      "Creational Patterns",
+      "Structural Patterns",
+      "Behavioral Patterns"
+    ],
+    "questionIds": [
+      "dp-9",
+      "dp-10",
+      "dp-11",
+      "dp-12",
+      "dp-13",
+      "dp-14",
+      "dp-15",
+      "dp-16",
+      "dp-17",
+      "dp-18",
+      "dp-19",
+      "dp-20"
+    ]
+  },
+  {
+    "week": 14,
+    "title": "Authentication & Security",
+    "category": "System Design",
+    "topics": [
+      "JWT",
+      "OAuth 2.0",
+      "Session vs Token",
+      "RBAC",
+      "Security Best Practices"
+    ],
+    "questionIds": [
+      "sd-1",
+      "sd-2",
+      "sd-3",
+      "sd-4",
+      "sd-5"
+    ]
+  },
+  {
+    "week": 15,
+    "title": "Payment, API Design & Real-time",
+    "category": "System Design",
+    "topics": [
+      "Payment Flows",
+      "Idempotency",
+      "REST vs GraphQL",
+      "Caching",
+      "WebSocket",
+      "Optimistic Updates"
+    ],
+    "questionIds": [
+      "sd-6",
+      "sd-7",
+      "sd-8",
+      "sd-9",
+      "sd-10",
+      "sd-11",
+      "sd-12",
+      "sd-13",
+      "sd-14",
+      "sd-15"
+    ]
+  }
+]
