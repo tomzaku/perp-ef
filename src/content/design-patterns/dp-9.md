@@ -114,3 +114,92 @@ logger1.log('App started');
 logger2.log('User logged in');
 console.log(logger1.getHistory().length); // 2 — shared state
 ```
+
+## Explanation
+
+**Why Singleton exists:** Some resources should only exist once — a database connection pool, an application config, a global event bus. Creating multiple instances would waste memory, cause inconsistencies, or create race conditions.
+
+**ES modules ARE singletons in JavaScript:** When you `import config from './config.js'`, the module is evaluated once and the same object is returned to every importer. You get Singleton for free — no class needed.
+
+**The class-based Singleton uses a static reference** to store the one instance. The constructor checks if the instance already exists; if so, returns the existing one. The `getInstance()` static method provides a cleaner access point.
+
+**Testing caveat:** Singletons are global state. Between tests, you must reset the singleton or tests bleed into each other. The `_resetForTesting()` method in the example exists for this reason.
+
+**When to avoid Singleton:**
+- When you need multiple isolated instances (e.g., multiple database connections)
+- When testability matters and you can't easily reset
+- When you're tempted to use it "because it's convenient" — that's usually just global state in disguise
+
+**Module singleton pattern (simplest):**
+```js
+// config.js — just export a plain object. Done.
+export const config = { apiUrl: '...', timeout: 5000 };
+// Every importer gets the same reference. No class needed.
+```
+
+## Diagram
+
+```
+SINGLETON — only one instance ever exists:
+
+  First call: new ConfigManager()
+  ┌─────────────────────────────────┐
+  │       ConfigManager             │
+  │  static #instance = null        │
+  │                                 │
+  │  constructor() {                │
+  │    if (#instance) return #inst  │ ← returns existing instance!
+  │    #instance = this             │ ← first time: store self
+  │  }                              │
+  └────────────────┬────────────────┘
+                   │ stored
+                   ▼
+              [ ONE OBJECT in memory ]
+                   │
+      ┌────────────┼────────────┐
+      ▼            ▼            ▼
+  moduleA      moduleB      moduleC
+  const c = new ConfigManager()
+             All get the SAME object reference
+
+
+ES MODULE SINGLETON (even simpler):
+
+  config.js: export default { apiUrl: '...', timeout: 5000 }
+                                    ↑
+  importA → same object reference ──┤
+  importB → same object reference ──┤  Node/browser module cache
+  importC → same object reference ──┘  ensures single evaluation
+```
+
+## ELI5
+
+Imagine your school. There is one principal. No matter how many times someone asks "Who is the principal?", they always get the same person — not a new principal each time.
+
+That's a Singleton: **no matter how many times you ask for the instance, you always get the same one.**
+
+```
+Without Singleton:
+  new ConfigManager()  → creates a new config object #1
+  new ConfigManager()  → creates another config object #2  ← different!
+
+  Object #1 has apiUrl = "https://api.example.com"
+  Someone changes object #2's apiUrl = "https://staging"
+  Object #1 still says "production" — inconsistency!
+
+With Singleton:
+  new ConfigManager()  → creates config object (first time)
+  new ConfigManager()  → returns THE SAME config object
+  ConfigManager.getInstance() → same object again
+
+  Changing apiUrl anywhere changes it EVERYWHERE — consistent.
+
+In JavaScript, the simplest singleton is just a module:
+  // config.js
+  export default { apiUrl: '...', timeout: 5000 };
+
+  // app.js    → imports same object
+  // utils.js  → imports same object
+  // api.js    → imports same object
+  All three see the same config — module cache = free singleton!
+```

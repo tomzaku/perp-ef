@@ -123,3 +123,85 @@ emailField.setValue('  User@Test.COM  ');
 console.log(emailField.format());    // 'user@test.com'
 console.log(emailField.validate());  // []
 ```
+
+## Explanation
+
+**The Fragile Base Class problem:** Deep inheritance hierarchies are brittle. When `Animal.eat()` changes, every subclass is affected — even the ones where `eat` wasn't the point. This is why "favor composition over inheritance" is one of the most repeated OOP principles.
+
+**The core difference:**
+- Inheritance: "A Duck IS an Animal" → shares code through class hierarchy
+- Composition: "A Duck HAS a FlyBehavior and HAS a SwimBehavior" → shares code through object assembly
+
+**When inheritance IS appropriate:**
+- True "is-a" relationship that's unlikely to change
+- You genuinely want to share or override parent behavior
+- The hierarchy is shallow (1-2 levels deep max)
+
+**When to prefer composition:**
+- You need to share behavior across unrelated classes (can't inherit from two parents in JS)
+- The behavior should be swappable at runtime
+- You want to combine multiple capabilities without a deep hierarchy
+
+**Mixin pattern as composition:** In JS, mixins let you compose behavior from multiple sources — functionally equivalent to multiple inheritance but without the diamond problem.
+
+## Diagram
+
+```
+INHERITANCE — rigid hierarchy:
+
+           ┌─────────────────┐
+           │     Animal      │
+           │  eat() sleep()  │
+           └────────┬────────┘
+          ┌─────────┴──────────┐
+     ┌────▼────┐          ┌────▼────┐
+     │   Bird  │          │  Fish   │
+     │ fly()   │          │ swim()  │
+     └────┬────┘          └─────────┘
+     ┌────▼──────────┐
+     │  FlyingFish?  │  ← CAN'T inherit from both Bird and Fish in JS!
+     │               │    Inheritance breaks here.
+     └───────────────┘
+
+
+COMPOSITION — flexible assembly:
+
+  flyBehavior    = { fly: () => "flaps wings" }
+  swimBehavior   = { swim: () => "paddles" }
+  walkBehavior   = { walk: () => "walks on land" }
+
+  Duck = { ...flyBehavior, ...swimBehavior, ...walkBehavior }
+  Fish = { ...swimBehavior }
+  Penguin = { ...swimBehavior, ...walkBehavior } ← no fly!
+
+  FlyingFish = { ...flyBehavior, ...swimBehavior } ← trivial!
+
+  Swap fly behavior at runtime:
+    duck.fly = jetpackBehavior.fly  ← impossible with inheritance
+```
+
+## ELI5
+
+Think about Lego vs a toy robot that's glued together.
+
+**Inheritance is the glued robot.** It comes pre-assembled. You can't give the robot different legs or swap its arms. Changing one part might break the others. It's rigid.
+
+**Composition is Lego.** You build your robot from bricks. Want a flying robot? Add wings. Need a swimming robot? Add fins. Want one that does both? Combine the flying-brick and swimming-brick. The pieces don't care about each other.
+
+```
+Inheritance (glued robot):
+  Animal
+    └── Bird (has wings glued on)
+           └── Penguin (wait, it can't fly... now the "wings" are broken)
+
+Composition (Lego):
+  flyBrick   = { fly: () => "zoom" }
+  swimBrick  = { swim: () => "splash" }
+
+  Bird    = flyBrick + animalBase
+  Fish    = swimBrick + animalBase
+  Penguin = swimBrick + animalBase  ← no flyBrick! Problem solved.
+  Duck    = flyBrick + swimBrick + animalBase  ← best of both
+```
+
+**Rule of thumb:** If you're building a class hierarchy deeper than 2 levels, ask yourself — "could I express this with composition instead?" Usually the answer is yes, and the result is simpler.

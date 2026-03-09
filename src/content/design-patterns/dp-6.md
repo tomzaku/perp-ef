@@ -127,3 +127,64 @@ notifyAll([
 ], 'Hello!');
 // Email: Hello!  SMS: Hello!  Push: Hello!
 ```
+
+## Explanation
+
+**Encapsulation** bundles data and the methods that operate on it into one unit, and hides internal details. In JS, private fields (`#field`) enforce this. The benefit: the internal representation can change without breaking external code.
+
+**Abstraction** hides *what* an implementation does from *how* it does it. A `fetchUser()` method abstracts away HTTP, caching, retries, and error handling. Callers only need to know "call this, get a user."
+
+**Inheritance** shares code between related types via a parent-child relationship. Use it when the child truly IS a kind of the parent and you want to share default behavior. But beware: tight inheritance hierarchies become brittle as requirements change.
+
+**Polymorphism** allows different types to be treated uniformly through a shared interface. `shape.area()` works on circles, rectangles, and triangles — the caller doesn't need to know or care which. This is the foundation of extensible design.
+
+**How they work together:**
+- Encapsulation protects state → Abstraction exposes clean operations → Inheritance shares behavior → Polymorphism enables flexible, extensible code
+- Each pillar solves a different dimension of the "complexity management" problem in OOP
+
+## Diagram
+
+```
+THE FOUR PILLARS:
+
+┌─────────────────────────────────────────────────────────────┐
+│  ENCAPSULATION          │  ABSTRACTION                       │
+│  "Hide the internals"   │  "Expose only what's needed"       │
+│                         │                                    │
+│  BankAccount {          │  fetchUser(id) {                   │
+│    #balance (private)   │    // HTTP, cache, retry...        │
+│    deposit(n) ← public  │    // caller doesn't see this      │
+│    withdraw(n) ← public │    return user; ← just this        │
+│  }                      │  }                                 │
+├─────────────────────────┼────────────────────────────────────┤
+│  INHERITANCE            │  POLYMORPHISM                      │
+│  "Share behavior"       │  "One interface, many behaviors"   │
+│                         │                                    │
+│     Animal              │       Shape                        │
+│     speak()→"..."       │       area() ← same call          │
+│        ↑                │      ↗      ↘                      │
+│   Dog     Cat           │  Circle   Rectangle               │
+│  "Woof"  "Meow"         │  πr²      w×h                      │
+│  (override speak)       │  (different results)               │
+└─────────────────────────┴────────────────────────────────────┘
+```
+
+## ELI5
+
+Think of a car as an example of all four pillars:
+
+**Encapsulation** = The engine is under the hood. You can't directly touch the pistons and fuel injectors. You interact through the steering wheel, pedals, and gear shift. The internals are protected — you can't accidentally break them.
+
+**Abstraction** = You press the gas pedal. You don't know about the fuel injection, combustion, transmission. The pedal is a simple interface hiding enormous complexity.
+
+**Inheritance** = A sports car IS a car. It inherits everything a car has (wheels, engine, doors) and adds more (turbo, spoiler). A truck IS also a car — different additions, same foundation.
+
+**Polymorphism** = You can drive any vehicle the same way: steering wheel, gas, brake. Whether it's a sedan or an SUV, the "drive interface" is the same. The vehicle handles the differences internally.
+
+```
+All four together:
+  Encapsulation → engine hidden behind dashboard
+  Abstraction   → pedals hide combustion complexity
+  Inheritance   → SportsCar IS-A Car, shares base behavior
+  Polymorphism  → drive(anyCar) works regardless of car type
+```

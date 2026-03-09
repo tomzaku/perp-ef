@@ -97,3 +97,83 @@ async function renderItems(dataSource) {
 renderItems(new ApiDataSource());
 renderItems(new LocalStorageDataSource()); // Substitutable!
 ```
+
+## Explanation
+
+**What LSP really means:** If you have code that works with a `Shape`, it must continue working correctly when you pass in a `Circle` or `Square` — without any surprises.
+
+**The Square/Rectangle trap is the classic example.** A square IS a rectangle mathematically, so inheritance seems natural. But behaviorally, a Rectangle lets you set width and height independently. A Square that secretly changes both when you set one breaks this expectation — that's an LSP violation.
+
+**Behavior contract, not just interface:** LSP is more than just "does it have the same methods?" The subclass must also:
+- Return the same types
+- Not throw exceptions the parent doesn't throw  
+- Not weaken preconditions (don't demand stricter input)
+- Not strengthen postconditions (don't promise less output)
+
+**LSP and duck typing in JS:** JavaScript doesn't enforce interfaces at compile time, so LSP violations only show up at runtime. When you accept a "data source" parameter, any object with `getAll()` and `getById()` should be passable — and they should all behave consistently.
+
+**How to fix LSP violations:** Often the hierarchy is wrong. Square and Rectangle are better as siblings under `Shape` rather than parent/child.
+
+## Diagram
+
+```
+LSP VIOLATION — Square pretends to be a Rectangle:
+
+  ┌─────────────────────────┐
+  │       Rectangle         │
+  │  setWidth(w)            │  ← sets width only
+  │  setHeight(h)           │  ← sets height only
+  │  area() = w × h         │
+  └───────────┬─────────────┘
+              │ extends
+  ┌───────────▼─────────────┐
+  │         Square          │  ❌ VIOLATION
+  │  setWidth(w) { w = h }  │  ← secretly sets BOTH
+  │  setHeight(h) { w = h } │  ← breaks Rectangle contract
+  └─────────────────────────┘
+
+  function increaseWidth(rect) {
+    rect.setWidth(rect.width + 1);
+    // EXPECTS: height unchanged
+    // WITH Square: height also changes! Surprise!
+  }
+
+
+LSP CORRECT — Siblings under a common abstraction:
+
+           ┌─────────────┐
+           │    Shape    │  ← abstract: area()
+           └──────┬──────┘
+          ┌───────┴────────┐
+  ┌───────▼──────┐  ┌──────▼──────┐
+  │  Rectangle   │  │   Square    │  ✅ Each has own
+  │  area()=w×h  │  │ area()=s×s  │     consistent behavior
+  └──────────────┘  └─────────────┘
+
+  printArea(shape) works correctly with EITHER — no surprises.
+```
+
+## ELI5
+
+Imagine you can drive any car: a sedan, an SUV, a sports car. They all have a steering wheel, gas pedal, and brake. You can get in any car and drive it the same way.
+
+Now imagine a "car" that has a steering wheel but the gas pedal is actually an ejector seat button. That's an LSP violation — it looks like a car, but it doesn't behave like one.
+
+```
+LSP says:
+  If something claims to BE a thing, it must BEHAVE like that thing.
+
+  ✅ SportsCar extends Car:
+     → Has gas, brake, steering
+     → Goes faster — just more of the same behavior
+     → You drive it exactly like a regular car
+     → No surprises
+
+  ❌ WeirdCar extends Car:
+     → Has gas, brake, steering
+     → But turning the wheel makes it go backward
+     → Using it "like a car" causes crashes!
+     → LSP violation
+```
+
+In the Square/Rectangle example: a square IS a rectangle geometrically. But if you treat it as a rectangle and set width without height changing, it breaks. The "is-a" relationship in real life doesn't always mean the same in code. When inheritance causes surprises, use sibling classes under a shared interface instead.

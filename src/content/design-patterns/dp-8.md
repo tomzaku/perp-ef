@@ -115,3 +115,99 @@ console.log(implementsInterface(user, ['serialize'])); // true
 // Abstract class: partial implementation + enforced contract, single inheritance
 // Interface: pure contract, multiple "implementation", duck typed in JS
 ```
+
+## Explanation
+
+**JavaScript doesn't have true interfaces** — but TypeScript adds them, and abstract classes can be simulated in plain JS by throwing in the constructor/methods.
+
+**Abstract class = partial implementation + contract:**
+- Can have concrete methods (shared behavior for all subclasses)
+- Can have abstract methods (must be overridden)
+- Subclasses get the shared behavior for free
+- Use when: you want to share code AND enforce a contract
+
+**Interface = pure contract:**
+- No implementation, only method signatures
+- A class can implement multiple interfaces
+- Use when: you want to specify what a type can DO, without any shared implementation
+
+**TypeScript practical guidance:**
+- `interface` for objects/function shapes you receive from outside
+- `abstract class` when you have default behavior to share across subtypes
+- Prefer `interface` for public APIs — easier to implement, extend, and mock
+
+**In plain JS:** Use throw-in-base-class to simulate abstract methods:
+```js
+class AbstractLogger {
+  log(msg) { throw new Error('log() must be implemented'); }
+}
+```
+
+## Diagram
+
+```
+ABSTRACT CLASS — partial implementation + contract:
+
+  ┌─────────────────────────────────┐
+  │         AbstractLogger          │
+  │  formatMessage(msg) { ... }     │  ← concrete (shared, free for subclasses)
+  │  abstract log(msg) { throw }    │  ← must be overridden
+  └────────────────┬────────────────┘
+         ┌─────────┴──────────┐
+  ┌──────▼──────┐      ┌──────▼──────┐
+  │ConsoleLogger│      │ FileLogger   │
+  │ log(msg) {  │      │ log(msg) {   │
+  │  console.log│      │  fs.write    │
+  │ }           │      │ }            │
+  └─────────────┘      └─────────────┘
+  Both get formatMessage() for free ↑
+
+
+INTERFACE — pure contract, no implementation:
+
+  interface Serializable {         interface Loggable {
+    serialize(): string            log(msg: string): void
+    deserialize(s: string): T    }
+  }
+
+  class User implements Serializable, Loggable {
+    // Must implement ALL methods from ALL interfaces
+    serialize() { ... }
+    deserialize() { ... }
+    log() { ... }
+  }
+
+  Key: a class can implement MULTIPLE interfaces, but only EXTEND ONE class.
+```
+
+## ELI5
+
+Imagine you're building a fast-food franchise.
+
+**An abstract class is like a franchise template.** It gives you the standard kitchen layout, the cooking processes, and the basic recipes. But you MUST supply the secret sauce recipe — that part is required from each franchisee. Every location gets the shared infrastructure for free, but must fill in the specific part.
+
+**An interface is like a certification requirement.** To get the "Health Approved" badge, you must have a functioning hand-washing station, temperature logs, and allergen labels. The certification doesn't tell you HOW to implement them — just that you MUST have them.
+
+```
+Abstract class (franchise template):
+  McDo abstract class:
+    ✅ standardKitchen()   ← shared, all locations get this
+    ✅ standardFries()     ← shared
+    ❌ makeSignatureBurger() ← MUST implement (abstract)
+
+  McDoNYC extends McDo:
+    makeSignatureBurger() { "NYC-style double patty" }  ← required!
+
+Interface (certification):
+  interface HealthCompliant:
+    hasHandWashing(): boolean   ← just a requirement, no implementation
+    hasAllergenLabels(): boolean
+
+  McDo implements HealthCompliant:
+    hasHandWashing() { return true; }   ← YOU implement how
+
+
+When to use which:
+  Abstract class → when you have SHARED CODE to give subclasses
+  Interface → when you want to say "anything that can do X"
+```
