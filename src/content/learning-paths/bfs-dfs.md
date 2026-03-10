@@ -16,7 +16,7 @@ keyInsights:
   - Multi-source BFS starts from all sources simultaneously
   - Backtracking = DFS + pruning
   - Mark visited before or after adding to queue changes behavior
-questionIds: [algo-42, algo-43, algo-44, algo-45, algo-46, algo-47, algo-48, algo-49, algo-50, algo-51, algo-52, algo-53]
+questionIds: [algo-42, algo-43, algo-44, algo-45, algo-46, algo-47, algo-48, algo-49, algo-50, algo-51, algo-52, algo-53, algo-55]
 ---
 
 ## BFS — Breadth-First Search
