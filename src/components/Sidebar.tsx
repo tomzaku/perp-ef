@@ -19,6 +19,7 @@ const navItems: { path: string; label: string; icon: string; desc: string }[] = 
   { path: '/design-patterns', label: 'Design Patterns', icon: 'DP', desc: 'OOP, SOLID & GoF patterns in JS' },
   { path: '/system-design', label: 'System Design', icon: 'SD', desc: 'Auth, payments, APIs & real-time systems' },
   { path: '/behavioral', label: 'Behavioral', icon: 'BQ', desc: 'STAR method, leadership & conflict stories' },
+  { path: '/ai', label: 'AI', icon: 'AI', desc: 'Prompting, RAG, agents & LLM architecture' },
 ];
 
 export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
@@ -54,6 +55,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
       '/design-patterns': 'Design Patterns',
       '/system-design': 'System Design',
       '/behavioral': 'Behavioral',
+      '/ai': 'AI',
     };
     return counts[map[path] || ''] || 0;
   }

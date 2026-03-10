@@ -219,6 +219,17 @@ function App() {
               />
             }
           />
+          <Route
+            path="/ai"
+            element={
+              <QuestionListPage
+                title="AI"
+                description="Prompt engineering, RAG pipelines, AI agents, embeddings, LLM architecture, and production AI application patterns."
+                questions={questionsByCategory['AI'] || []}
+                {...sharedProps}
+              />
+            }
+          />
 
           {/* Question Detail */}
           <Route path="/question/:id" element={<QuestionPage />} />

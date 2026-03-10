@@ -4,7 +4,7 @@ export interface Example {
   explanation?: string;
 }
 
-export type Category = 'Algorithm' | 'JavaScript' | 'Node.js' | 'React' | 'Design System' | 'Design Patterns' | 'System Design' | 'Behavioral';
+export type Category = 'Algorithm' | 'JavaScript' | 'Node.js' | 'React' | 'Design System' | 'Design Patterns' | 'System Design' | 'Behavioral' | 'AI';
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 export interface TestCase {
