@@ -54,7 +54,7 @@ export function QuestionDetail({
   const [showTakeaway, setShowTakeaway] = useState(false);
 
   return (
-    <div className="animate-fade-in max-w-4xl">
+    <div className="animate-fade-in">
       {/* Sticky header bar */}
       <div className="sticky -top-16 lg:-top-8 z-10 -mx-4 px-4 lg:-mx-8 lg:px-8 -mt-16 pt-16 lg:-mt-8 lg:pt-8 pb-3 bg-bg-primary/80 backdrop-blur-md">
         <div className="flex items-center justify-between mb-2">
@@ -67,14 +67,16 @@ export function QuestionDetail({
             </svg>
             Back
           </button>
-          <div className="flex items-center gap-3">
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-lg sm:text-xl font-display font-bold text-text-primary truncate">
+            {question.title}
+          </h1>
+          <div className="flex items-center gap-2 shrink-0">
             <VoiceRecorder questionId={question.id} />
             <Timer questionId={question.id} />
           </div>
         </div>
-        <h1 className="text-lg sm:text-xl font-display font-bold text-text-primary truncate">
-          {question.title}
-        </h1>
       </div>
 
       {/* Header */}
@@ -145,228 +147,255 @@ export function QuestionDetail({
         </div>
       </div>
 
-      {/* Description */}
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider">
-            Problem Description
-          </h2>
-          <ReadAloud text={question.description} />
-        </div>
-        <div className="bg-bg-card border border-border rounded-lg p-5">
-          <Markdown content={question.description} />
-        </div>
-      </section>
-
-      {/* ELI5 */}
-      {question.eli5 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-            Explain Like I'm 5
-          </h2>
-          <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-5">
-            <Markdown content={question.eli5} />
-          </div>
-        </section>
-      )}
-
-      {/* Examples */}
-      {question.examples && question.examples.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-            Examples
-          </h2>
-          <div className="space-y-3">
-            {question.examples.map((ex, i) => (
-              <div key={i} className="bg-bg-card border border-border rounded-lg p-4">
-                <div className="space-y-1.5 text-sm font-code">
-                  <div>
-                    <span className="text-text-muted">Input: </span>
-                    <span className="text-accent-cyan">{ex.input}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-muted">Output: </span>
-                    <span className="text-accent-green">{ex.output}</span>
-                  </div>
-                  {ex.explanation && (
-                    <div className="text-text-secondary text-xs mt-2 pt-2 border-t border-border">
-                      {ex.explanation}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Complexity */}
-      <section className="mb-8">
-        <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-          Complexity
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-bg-card border border-border rounded-lg px-4 py-3">
-            <span className="text-xs text-text-muted block mb-1">Time</span>
-            <span className="text-sm font-code text-accent-cyan break-all">{question.timeComplexity}</span>
-          </div>
-          <div className="bg-bg-card border border-border rounded-lg px-4 py-3">
-            <span className="text-xs text-text-muted block mb-1">Space</span>
-            <span className="text-sm font-code text-accent-green break-all">{question.spaceComplexity}</span>
-          </div>
-        </div>
-      </section>
-
-      {/* My Notes */}
-      <NotesSection
-        questionId={question.id}
-        notes={notes}
-        onAddNote={onAddNote}
-        onUpdateNote={onUpdateNote}
-        onDeleteNote={onDeleteNote}
-      />
-
-      {/* Code Playground */}
-      <CodeEditor
-        defaultCode={buildDefaultCode(question)}
-        testConfig={testConfigs[question.id]}
-      />
-
-      {/* Brute Force Solution */}
-      {question.bruteForce && (
-        <section className="mb-8">
-          <button
-            onClick={() => setShowBruteForce(!showBruteForce)}
-            className="flex items-center gap-2 text-sm font-display font-bold text-accent-orange uppercase tracking-wider mb-3 cursor-pointer hover:text-accent-orange/80 transition-colors"
-          >
-            <svg
-              width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-              className={`transition-transform duration-200 ${showBruteForce ? 'rotate-90' : ''}`}
-            >
-              <path d="M4 2L8 6L4 10" />
-            </svg>
-            Brute Force Approach
-          </button>
-          {showBruteForce && (
-            <div className="animate-fade-in space-y-4">
-              <CodeBlock code={question.bruteForce} title="Brute Force" />
-              {question.bruteForceExplanation && (
-                <>
-                  <button
-                    onClick={() => setShowBruteForceExplanation(!showBruteForceExplanation)}
-                    className="flex items-center gap-2 text-xs text-text-muted hover:text-accent-orange transition-colors cursor-pointer"
-                  >
-                    <svg
-                      width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-                      className={`transition-transform duration-200 ${showBruteForceExplanation ? 'rotate-90' : ''}`}
-                    >
-                      <path d="M4 2L8 6L4 10" />
-                    </svg>
-                    {showBruteForceExplanation ? 'Hide' : 'Show'} Explanation
-                  </button>
-                  {showBruteForceExplanation && (
-                    <div className="bg-accent-orange/5 border border-accent-orange/15 rounded-lg p-5">
-                      <Markdown content={question.bruteForceExplanation} />
-                    </div>
-                  )}
-                </>
-              )}
+      {/* Two-column layout: content left, notes right on desktop */}
+      <div className="lg:flex lg:gap-6">
+        {/* Main content */}
+        <div className="lg:flex-3 min-w-0">
+          {/* Description */}
+          <section className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider">
+                Problem Description
+              </h2>
+              <ReadAloud text={question.description} />
             </div>
-          )}
-        </section>
-      )}
+            <div className="bg-bg-card border border-border rounded-lg p-5">
+              <Markdown content={question.description} />
+            </div>
+          </section>
 
-      {/* Optimal Solution */}
-      <section className="mb-8">
-        <button
-          onClick={() => setShowSolution(!showSolution)}
-          className="flex items-center gap-2 text-sm font-display font-bold text-accent-cyan uppercase tracking-wider mb-3 cursor-pointer hover:text-accent-cyan/80 transition-colors"
-        >
-          <svg
-            width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-            className={`transition-transform duration-200 ${showSolution ? 'rotate-90' : ''}`}
-          >
-            <path d="M4 2L8 6L4 10" />
-          </svg>
-          {showSolution ? 'Hide Solution' : 'Show Solution'}
-        </button>
-        {showSolution && (
-          <div className="animate-fade-in space-y-4">
-            <CodeBlock code={question.solution} title="Optimal Solution" />
-            {question.solutionExplanation && (
-              <>
-                <button
-                  onClick={() => setShowSolutionExplanation(!showSolutionExplanation)}
-                  className="flex items-center gap-2 text-xs text-text-muted hover:text-accent-cyan transition-colors cursor-pointer"
-                >
-                  <svg
-                    width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-                    className={`transition-transform duration-200 ${showSolutionExplanation ? 'rotate-90' : ''}`}
-                  >
-                    <path d="M4 2L8 6L4 10" />
-                  </svg>
-                  {showSolutionExplanation ? 'Hide' : 'Show'} Detailed Explanation
-                </button>
-                {showSolutionExplanation && (
-                  <div className="bg-accent-cyan/5 border border-accent-cyan/15 rounded-lg p-5">
-                    <Markdown content={question.solutionExplanation} />
+          {/* ELI5 */}
+          {question.eli5 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+                Explain Like I'm 5
+              </h2>
+              <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-5">
+                <Markdown content={question.eli5} />
+              </div>
+            </section>
+          )}
+
+          {/* Examples */}
+          {question.examples && question.examples.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+                Examples
+              </h2>
+              <div className="space-y-3">
+                {question.examples.map((ex, i) => (
+                  <div key={i} className="bg-bg-card border border-border rounded-lg p-4">
+                    <div className="space-y-1.5 text-sm font-code">
+                      <div>
+                        <span className="text-text-muted">Input: </span>
+                        <span className="text-accent-cyan">{ex.input}</span>
+                      </div>
+                      <div>
+                        <span className="text-text-muted">Output: </span>
+                        <span className="text-accent-green">{ex.output}</span>
+                      </div>
+                      {ex.explanation && (
+                        <div className="text-text-secondary text-xs mt-2 pt-2 border-t border-border">
+                          {ex.explanation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Complexity */}
+          <section className="mb-8">
+            <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+              Complexity
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-bg-card border border-border rounded-lg px-4 py-3">
+                <span className="text-xs text-text-muted block mb-1">Time</span>
+                <span className="text-sm font-code text-accent-cyan break-all">{question.timeComplexity}</span>
+              </div>
+              <div className="bg-bg-card border border-border rounded-lg px-4 py-3">
+                <span className="text-xs text-text-muted block mb-1">Space</span>
+                <span className="text-sm font-code text-accent-green break-all">{question.spaceComplexity}</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Notes on mobile only */}
+          <div className="lg:hidden mb-8">
+            <NotesSection
+              questionId={question.id}
+              notes={notes}
+              onAddNote={onAddNote}
+              onUpdateNote={onUpdateNote}
+              onDeleteNote={onDeleteNote}
+            />
+          </div>
+
+          {/* Code Playground */}
+          <CodeEditor
+            defaultCode={buildDefaultCode(question)}
+            testConfig={testConfigs[question.id]}
+          />
+
+          {/* Show Solution */}
+          <section className="mb-8">
+            <button
+              onClick={() => setShowSolution(!showSolution)}
+              className="flex items-center gap-2 text-sm font-display font-bold text-accent-cyan uppercase tracking-wider mb-3 cursor-pointer hover:text-accent-cyan/80 transition-colors"
+            >
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+                className={`transition-transform duration-200 ${showSolution ? 'rotate-90' : ''}`}
+              >
+                <path d="M4 2L8 6L4 10" />
+              </svg>
+              {showSolution ? 'Hide Solution' : 'Show Solution'}
+            </button>
+            {showSolution && (
+              <div className="animate-fade-in space-y-6">
+                {/* Brute Force (inside solution) */}
+                {question.bruteForce && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setShowBruteForce(!showBruteForce)}
+                      className="flex items-center gap-2 text-sm font-display font-bold text-accent-orange uppercase tracking-wider cursor-pointer hover:text-accent-orange/80 transition-colors"
+                    >
+                      <svg
+                        width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+                        className={`transition-transform duration-200 ${showBruteForce ? 'rotate-90' : ''}`}
+                      >
+                        <path d="M4 2L8 6L4 10" />
+                      </svg>
+                      Brute Force Approach
+                    </button>
+                    {showBruteForce && (
+                      <div className="animate-fade-in space-y-4">
+                        <CodeBlock code={question.bruteForce} title="Brute Force" />
+                        {question.bruteForceExplanation && (
+                          <>
+                            <button
+                              onClick={() => setShowBruteForceExplanation(!showBruteForceExplanation)}
+                              className="flex items-center gap-2 text-xs text-text-muted hover:text-accent-orange transition-colors cursor-pointer"
+                            >
+                              <svg
+                                width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+                                className={`transition-transform duration-200 ${showBruteForceExplanation ? 'rotate-90' : ''}`}
+                              >
+                                <path d="M4 2L8 6L4 10" />
+                              </svg>
+                              {showBruteForceExplanation ? 'Hide' : 'Show'} Explanation
+                            </button>
+                            {showBruteForceExplanation && (
+                              <div className="bg-accent-orange/5 border border-accent-orange/15 rounded-lg p-5">
+                                <Markdown content={question.bruteForceExplanation} />
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
-              </>
-            )}
-            {question.diagram && (
-              <div>
-                <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-2">
-                  Algorithm Diagram
-                </h3>
-                <div className="bg-bg-card border border-border rounded-lg p-4">
-                  <Markdown content={question.diagram} />
+
+                {/* Optimal Solution */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-display font-bold text-accent-cyan uppercase tracking-wider">
+                    Optimal Solution
+                  </h3>
+                  <CodeBlock code={question.solution} title="Optimal Solution" />
+                  {question.solutionExplanation && (
+                    <>
+                      <button
+                        onClick={() => setShowSolutionExplanation(!showSolutionExplanation)}
+                        className="flex items-center gap-2 text-xs text-text-muted hover:text-accent-cyan transition-colors cursor-pointer"
+                      >
+                        <svg
+                          width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+                          className={`transition-transform duration-200 ${showSolutionExplanation ? 'rotate-90' : ''}`}
+                        >
+                          <path d="M4 2L8 6L4 10" />
+                        </svg>
+                        {showSolutionExplanation ? 'Hide' : 'Show'} Detailed Explanation
+                      </button>
+                      {showSolutionExplanation && (
+                        <div className="bg-accent-cyan/5 border border-accent-cyan/15 rounded-lg p-5">
+                          <Markdown content={question.solutionExplanation} />
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {question.diagram && (
+                    <div>
+                      <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-2">
+                        Algorithm Diagram
+                      </h3>
+                      <div className="bg-bg-card border border-border rounded-lg p-4">
+                        <Markdown content={question.diagram} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-          </div>
-        )}
-      </section>
+          </section>
 
-      {/* Key Takeaway - collapsed by default */}
-      <section className="mb-8">
-        <button
-          onClick={() => setShowTakeaway(!showTakeaway)}
-          className="flex items-center gap-2 text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3 cursor-pointer hover:text-accent-cyan transition-colors"
-        >
-          <svg
-            width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
-            className={`transition-transform duration-200 ${showTakeaway ? 'rotate-90' : ''}`}
-          >
-            <path d="M4 2L8 6L4 10" />
-          </svg>
-          Key Takeaway
-        </button>
-        {showTakeaway && (
-          <div className="animate-fade-in bg-accent-cyan/5 border border-accent-cyan/20 rounded-lg p-4">
-            <Markdown content={question.keyTakeaway} />
-          </div>
-        )}
-      </section>
-
-      {/* Similar Problems */}
-      {question.similarProblems.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-            Similar Problems
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {question.similarProblems.map((p) => (
-              <span
-                key={p}
-                className="px-3 py-1.5 bg-bg-card border border-border rounded-lg text-sm text-text-secondary"
+          {/* Key Takeaway - collapsed by default */}
+          <section className="mb-8">
+            <button
+              onClick={() => setShowTakeaway(!showTakeaway)}
+              className="flex items-center gap-2 text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3 cursor-pointer hover:text-accent-cyan transition-colors"
+            >
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+                className={`transition-transform duration-200 ${showTakeaway ? 'rotate-90' : ''}`}
               >
-                {p}
-              </span>
-            ))}
+                <path d="M4 2L8 6L4 10" />
+              </svg>
+              Key Takeaway
+            </button>
+            {showTakeaway && (
+              <div className="animate-fade-in bg-accent-cyan/5 border border-accent-cyan/20 rounded-lg p-4">
+                <Markdown content={question.keyTakeaway} />
+              </div>
+            )}
+          </section>
+
+          {/* Similar Problems */}
+          {question.similarProblems.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+                Similar Problems
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {question.similarProblems.map((p) => (
+                  <span
+                    key={p}
+                    className="px-3 py-1.5 bg-bg-card border border-border rounded-lg text-sm text-text-secondary"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Notes sidebar - desktop only */}
+        <div className="hidden lg:block lg:flex-1">
+          <div className="sticky top-12">
+            <NotesSection
+              questionId={question.id}
+              notes={notes}
+              onAddNote={onAddNote}
+              onUpdateNote={onUpdateNote}
+              onDeleteNote={onDeleteNote}
+            />
           </div>
-        </section>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
