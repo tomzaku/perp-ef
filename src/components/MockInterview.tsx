@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Question } from '../types/question';
 import { useAIChat, getApiKey, setApiKey } from '../hooks/useAIChat';
 import { Markdown } from './Markdown';
+import { ReadAloud } from './ReadAloud';
 
 interface MockInterviewProps {
   question: Question;
@@ -15,9 +16,42 @@ export function MockInterview({ question }: MockInterviewProps) {
   const [hasApiKey, setHasApiKey] = useState(() => !!getApiKey());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [autoRead, setAutoRead] = useState(false);
+  const lastReadIndexRef = useRef(-1);
 
   const { messages, isLoading, error, sendMessage, startInterview, reset } =
     useAIChat(question);
+
+  // Auto-read new assistant messages
+  const speakText = useCallback((text: string) => {
+    if (typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const clean = text
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[>\-|]/g, '')
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\n/g, ' ')
+      .trim();
+    if (!clean) return;
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'en-US';
+    utterance.rate = 1;
+    speechSynthesis.speak(utterance);
+  }, []);
+
+  useEffect(() => {
+    if (!autoRead || isLoading || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role === 'assistant' && messages.length - 1 > lastReadIndexRef.current) {
+      lastReadIndexRef.current = messages.length - 1;
+      speakText(lastMsg.content);
+    }
+  }, [messages, isLoading, autoRead, speakText]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -158,13 +192,23 @@ export function MockInterview({ question }: MockInterviewProps) {
         </h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleReset}
+            onClick={() => setAutoRead(!autoRead)}
+            className={`text-xs transition-colors cursor-pointer ${
+              autoRead ? 'text-accent-cyan' : 'text-text-muted hover:text-accent-cyan'
+            }`}
+            title={autoRead ? 'Disable auto-read' : 'Auto-read questions'}
+          >
+            {autoRead ? '🔊 Auto-read on' : '🔇 Auto-read'}
+          </button>
+          <span className="text-border">|</span>
+          <button
+            onClick={() => { speechSynthesis?.cancel(); handleReset(); }}
             className="text-xs text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
           >
             Restart
           </button>
           <button
-            onClick={() => { setExpanded(false); handleReset(); }}
+            onClick={() => { speechSynthesis?.cancel(); setExpanded(false); handleReset(); }}
             className="text-xs text-text-muted hover:text-accent-red transition-colors cursor-pointer"
           >
             End
@@ -188,7 +232,12 @@ export function MockInterview({ question }: MockInterviewProps) {
                 }`}
               >
                 {msg.role === 'assistant' ? (
-                  <Markdown content={msg.content} />
+                  <>
+                    <Markdown content={msg.content} />
+                    <div className="mt-2 flex justify-end">
+                      <ReadAloud text={msg.content} />
+                    </div>
+                  </>
                 ) : (
                   <div className="whitespace-pre-wrap">{msg.content}</div>
                 )}

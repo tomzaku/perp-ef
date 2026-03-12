@@ -222,7 +222,10 @@ export function QuestionDetail({
             </div>
           </section>
 
-          {/* Notes on mobile only */}
+          {/* Mock Interview + Notes on mobile only */}
+          <div className="lg:hidden mb-8">
+            <MockInterview question={question} />
+          </div>
           <div className="lg:hidden mb-8">
             <NotesSection
               questionId={question.id}
@@ -238,9 +241,6 @@ export function QuestionDetail({
             defaultCode={buildDefaultCode(question)}
             testConfig={testConfigs[question.id]}
           />
-
-          {/* Mock Interview */}
-          <MockInterview question={question} />
 
           {/* Show Solution */}
           <section className="mb-8">
@@ -385,9 +385,10 @@ export function QuestionDetail({
           )}
         </div>
 
-        {/* Notes sidebar - desktop only */}
-        <div className="hidden lg:block lg:flex-1">
+        {/* Right sidebar - desktop only */}
+        <div className="hidden lg:block lg:flex-2">
           <div className="sticky top-4">
+            <MockInterview question={question} />
             <NotesSection
               questionId={question.id}
               notes={notes}
