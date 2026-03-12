@@ -7,8 +7,7 @@ import { CodeBlock } from './CodeBlock';
 import { NotesSection } from './NotesSection';
 import { CodeEditor } from './CodeEditor';
 import { Markdown } from './Markdown';
-import { Timer } from './FloatingTimer';
-import { VoiceRecorder } from './VoiceRecorder';
+import { AnswerSession } from './AnswerSession';
 import { ReadAloud } from './ReadAloud';
 import { testConfigs } from '../data';
 
@@ -72,9 +71,8 @@ export function QuestionDetail({
           <h1 className="text-lg sm:text-xl font-display font-bold text-text-primary truncate">
             {question.title}
           </h1>
-          <div className="flex items-center gap-2 shrink-0">
-            <VoiceRecorder questionId={question.id} />
-            <Timer questionId={question.id} />
+          <div className="shrink-0">
+            <AnswerSession questionId={question.id} />
           </div>
         </div>
       </div>
@@ -148,7 +146,7 @@ export function QuestionDetail({
       </div>
 
       {/* Two-column layout: content left, notes right on desktop */}
-      <div className="lg:flex lg:gap-6">
+      <div className="lg:flex lg:gap-6 lg:items-start">
         {/* Main content */}
         <div className="lg:flex-3 min-w-0">
           {/* Description */}
@@ -385,7 +383,7 @@ export function QuestionDetail({
 
         {/* Notes sidebar - desktop only */}
         <div className="hidden lg:block lg:flex-1">
-          <div className="sticky top-12">
+          <div className="sticky top-4">
             <NotesSection
               questionId={question.id}
               notes={notes}

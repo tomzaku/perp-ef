@@ -57,7 +57,7 @@ export function NotesSection({
 
   return (
     <div>
-      <h2 className="text-sm font-display font-bold text-accent-purple uppercase tracking-wider mb-3">
+      <h2 className="text-sm font-display font-bold text-accent-purple uppercase tracking-wider mb-4 mt-1">
         My Notes
         {notes.length > 0 && (
           <span className="ml-2 text-[10px] bg-accent-purple/20 text-accent-purple px-1.5 py-0.5 rounded-full font-code">
@@ -74,7 +74,7 @@ export function NotesSection({
             onChange={(e) => setNewContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Write your approach, thoughts, or solution here..."
-            className="w-full bg-bg-card border border-border rounded-lg p-3 text-sm text-text-primary resize-y min-h-[80px] focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 font-code placeholder:text-text-muted"
+            className="w-full bg-bg-card border border-border rounded-lg p-3 text-sm text-text-primary resize-y min-h-[400px] focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 font-code placeholder:text-text-muted"
           />
           {newContent.trim() && (
             <div className="flex items-center gap-2 mt-2">
