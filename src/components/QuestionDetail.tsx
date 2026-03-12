@@ -8,6 +8,7 @@ import { NotesSection } from './NotesSection';
 import { CodeEditor } from './CodeEditor';
 import { Markdown } from './Markdown';
 import { AnswerSession } from './AnswerSession';
+import { MockInterview } from './MockInterview';
 import { ReadAloud } from './ReadAloud';
 import { testConfigs } from '../data';
 
@@ -237,6 +238,9 @@ export function QuestionDetail({
             defaultCode={buildDefaultCode(question)}
             testConfig={testConfigs[question.id]}
           />
+
+          {/* Mock Interview */}
+          <MockInterview question={question} />
 
           {/* Show Solution */}
           <section className="mb-8">
