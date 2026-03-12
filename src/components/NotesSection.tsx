@@ -19,6 +19,7 @@ export function NotesSection({
   const [newContent, setNewContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [expanded, setExpanded] = useState(true);
 
   const handleAdd = () => {
     if (newContent.trim()) {
@@ -57,16 +58,25 @@ export function NotesSection({
 
   return (
     <div>
-      <h2 className="text-sm font-display font-bold text-accent-purple uppercase tracking-wider mb-4 mt-1">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 text-sm font-display font-bold text-accent-purple uppercase tracking-wider mb-4 mt-1 cursor-pointer hover:text-accent-purple/80 transition-colors"
+      >
+        <svg
+          width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2"
+          className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+        >
+          <path d="M4 2L8 6L4 10" />
+        </svg>
         My Notes
         {notes.length > 0 && (
-          <span className="ml-2 text-[10px] bg-accent-purple/20 text-accent-purple px-1.5 py-0.5 rounded-full font-code">
+          <span className="text-[10px] bg-accent-purple/20 text-accent-purple px-1.5 py-0.5 rounded-full font-code">
             {notes.length}
           </span>
         )}
-      </h2>
+      </button>
 
-      <div className="space-y-3">
+      {expanded && <div className="space-y-3 animate-fade-in">
         {/* Always-visible input */}
         <div>
           <textarea
@@ -147,7 +157,7 @@ export function NotesSection({
             )}
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }
