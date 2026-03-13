@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
 import { CompanyTag } from './CompanyTag';
+import { useAuth } from '../hooks/useAuth';
 
 interface QuestionCardProps {
   question: Question;
@@ -19,6 +20,16 @@ export function QuestionCard({
   onToggleBookmarked,
 }: QuestionCardProps) {
   const navigate = useNavigate();
+  const { user, signInWithGoogle } = useAuth();
+
+  const handleProtectedAction = (action: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (user) {
+      action();
+    } else {
+      signInWithGoogle();
+    }
+  };
 
   return (
     <div
@@ -32,10 +43,7 @@ export function QuestionCard({
       <div className="flex items-start gap-3">
         {/* Checkbox */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleCompleted();
-          }}
+          onClick={handleProtectedAction(onToggleCompleted)}
           className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
             isCompleted
               ? 'border-easy bg-easy/20 text-easy'
@@ -95,10 +103,7 @@ export function QuestionCard({
 
         {/* Bookmark */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleBookmarked();
-          }}
+          onClick={handleProtectedAction(onToggleBookmarked)}
           className={`mt-0.5 p-1 transition-colors cursor-pointer ${
             isBookmarked ? 'text-accent-orange' : 'text-text-muted/30 hover:text-accent-orange/50'
           }`}

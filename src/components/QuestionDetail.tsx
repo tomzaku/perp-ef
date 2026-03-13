@@ -10,6 +10,7 @@ import { Markdown } from './Markdown';
 import { AnswerSession } from './AnswerSession';
 import { MockInterview } from './MockInterview';
 import { ReadAloud } from './ReadAloud';
+import { AuthGuard } from './AuthGuard';
 import { testConfigs } from '../data';
 
 interface QuestionDetailProps {
@@ -98,38 +99,61 @@ export function QuestionDetail({
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={onToggleCompleted}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
-              isCompleted
-                ? 'bg-easy/10 text-easy border-easy/30'
-                : 'bg-bg-tertiary text-text-secondary border-border hover:border-easy/30'
-            }`}
-          >
-            {isCompleted ? (
-              <>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Completed
-              </>
-            ) : (
-              'Mark Complete'
-            )}
-          </button>
-          <button
-            onClick={onToggleBookmarked}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
-              isBookmarked
-                ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/30'
-                : 'bg-bg-tertiary text-text-secondary border-border hover:border-accent-orange/30'
-            }`}
-          >
-            <svg width="12" height="16" viewBox="0 0 14 18" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5">
-              <path d="M1 3C1 1.89543 1.89543 1 3 1H11C12.1046 1 13 1.89543 13 3V17L7 13L1 17V3Z" />
-            </svg>
-            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-          </button>
+          <AuthGuard feature="track your progress" fallback={
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border bg-bg-tertiary text-text-muted border-border opacity-60"
+              title="Sign in to track progress"
+              onClick={() => {}}
+            >
+              Mark Complete
+            </button>
+          }>
+            <button
+              onClick={onToggleCompleted}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+                isCompleted
+                  ? 'bg-easy/10 text-easy border-easy/30'
+                  : 'bg-bg-tertiary text-text-secondary border-border hover:border-easy/30'
+              }`}
+            >
+              {isCompleted ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Completed
+                </>
+              ) : (
+                'Mark Complete'
+              )}
+            </button>
+          </AuthGuard>
+          <AuthGuard feature="track your progress" fallback={
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border bg-bg-tertiary text-text-muted border-border opacity-60"
+              title="Sign in to bookmark"
+              onClick={() => {}}
+            >
+              <svg width="12" height="16" viewBox="0 0 14 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M1 3C1 1.89543 1.89543 1 3 1H11C12.1046 1 13 1.89543 13 3V17L7 13L1 17V3Z" />
+              </svg>
+              Bookmark
+            </button>
+          }>
+            <button
+              onClick={onToggleBookmarked}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+                isBookmarked
+                  ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/30'
+                  : 'bg-bg-tertiary text-text-secondary border-border hover:border-accent-orange/30'
+              }`}
+            >
+              <svg width="12" height="16" viewBox="0 0 14 18" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5">
+                <path d="M1 3C1 1.89543 1.89543 1 3 1H11C12.1046 1 13 1.89543 13 3V17L7 13L1 17V3Z" />
+              </svg>
+              {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+            </button>
+          </AuthGuard>
           {question.leetcodeUrl && (
             <a
               href={question.leetcodeUrl}
@@ -224,16 +248,20 @@ export function QuestionDetail({
 
           {/* Mock Interview + Notes on mobile only */}
           <div className="lg:hidden mb-8">
-            <MockInterview question={question} />
+            <AuthGuard feature="use Mock Interview">
+              <MockInterview question={question} />
+            </AuthGuard>
           </div>
           <div className="lg:hidden mb-8">
-            <NotesSection
-              questionId={question.id}
-              notes={notes}
-              onAddNote={onAddNote}
-              onUpdateNote={onUpdateNote}
-              onDeleteNote={onDeleteNote}
-            />
+            <AuthGuard feature="save notes">
+              <NotesSection
+                questionId={question.id}
+                notes={notes}
+                onAddNote={onAddNote}
+                onUpdateNote={onUpdateNote}
+                onDeleteNote={onDeleteNote}
+              />
+            </AuthGuard>
           </div>
 
           {/* Code Playground */}
@@ -388,14 +416,18 @@ export function QuestionDetail({
         {/* Right sidebar - desktop only */}
         <div className="hidden lg:block lg:flex-2">
           <div className="sticky top-4">
-            <MockInterview question={question} />
-            <NotesSection
-              questionId={question.id}
-              notes={notes}
-              onAddNote={onAddNote}
-              onUpdateNote={onUpdateNote}
-              onDeleteNote={onDeleteNote}
-            />
+            <AuthGuard feature="use Mock Interview">
+              <MockInterview question={question} />
+            </AuthGuard>
+            <AuthGuard feature="save notes">
+              <NotesSection
+                questionId={question.id}
+                notes={notes}
+                onAddNote={onAddNote}
+                onUpdateNote={onUpdateNote}
+                onDeleteNote={onDeleteNote}
+              />
+            </AuthGuard>
           </div>
         </div>
       </div>

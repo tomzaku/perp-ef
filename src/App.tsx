@@ -6,6 +6,7 @@ import { useProgress } from './hooks/useProgress';
 import { useNotes } from './hooks/useNotes';
 import { useTheme } from './hooks/useTheme';
 import { ThemeContext } from './hooks/ThemeContext';
+import { AuthProvider } from './hooks/useAuth';
 import { Sidebar } from './components/Sidebar';
 import { StudyPlanView } from './components/StudyPlanView';
 import { QuestionDetail } from './components/QuestionDetail';
@@ -83,6 +84,7 @@ function App() {
   };
 
   return (
+    <AuthProvider>
     <ThemeContext value={themeValue}>
     <div className="flex min-h-screen">
       <Sidebar
@@ -249,6 +251,7 @@ function App() {
       </main>
     </div>
     </ThemeContext>
+    </AuthProvider>
   );
 }
 

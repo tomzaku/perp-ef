@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useThemeContext } from '../hooks/ThemeContext';
+import { useAuth } from '../hooks/useAuth';
 
 interface SidebarProps {
   counts: Record<string, number>;
@@ -26,6 +27,7 @@ const navItems: { path: string; label: string; icon: string; desc: string }[] = 
 export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
   const location = useLocation();
   const { theme, toggleTheme } = useThemeContext();
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -164,6 +166,48 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
         </div>
       </nav>
 
+      {/* User section */}
+      <div className="px-3 py-4 border-t border-border">
+        {authLoading ? (
+          <div className="flex items-center gap-2 px-3 py-2 text-sm text-text-muted">
+            <span className="w-4 h-4 border-2 border-text-muted/30 border-t-text-muted rounded-full animate-spin" />
+            Loading...
+          </div>
+        ) : user ? (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <img
+              src={user.user_metadata?.avatar_url || ''}
+              alt=""
+              className="w-8 h-8 rounded-full shrink-0"
+              referrerPolicy="no-referrer"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">
+                {user.user_metadata?.full_name || user.email}
+              </p>
+              <button
+                onClick={signOut}
+                className="text-[10px] text-text-muted hover:text-accent-cyan transition-colors cursor-pointer"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={signInWithGoogle}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-all cursor-pointer"
+          >
+            <span className="w-8 h-8 rounded-md bg-bg-tertiary flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            Sign in with Google
+          </button>
+        )}
+      </div>
     </>
   );
 
