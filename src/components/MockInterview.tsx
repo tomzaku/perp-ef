@@ -79,6 +79,17 @@ export function MockInterview({ question }: MockInterviewProps) {
     }
   };
 
+  // Auto-resize textarea
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, []);
+
+  useEffect(() => {
+    autoResize(inputRef.current);
+  }, [input, autoResize]);
+
   const handleSaveApiKey = () => {
     const key = apiKeyInput.trim();
     if (key) {
@@ -218,7 +229,7 @@ export function MockInterview({ question }: MockInterviewProps) {
 
       <div className="bg-bg-card border border-accent-purple/20 rounded-lg overflow-hidden">
         {/* Messages */}
-        <div className="max-h-[500px] overflow-y-auto p-4 space-y-4">
+        <div className="min-h-[300px] max-h-[70vh] overflow-y-auto p-4 space-y-4">
           {messages.map((msg, i) => (
             <div
               key={i}
@@ -281,9 +292,9 @@ export function MockInterview({ question }: MockInterviewProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your answer..."
-              rows={2}
+              rows={1}
               disabled={isLoading}
-              className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted disabled:opacity-50 font-code"
+              className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted disabled:opacity-50 font-code min-h-[2.5rem] max-h-[200px]"
             />
             <button
               onClick={handleSend}
