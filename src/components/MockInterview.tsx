@@ -241,8 +241,14 @@ export function MockInterview({ question }: MockInterviewProps) {
           Mock Interview
         </h2>
         <div className="bg-bg-card border border-border rounded-lg p-5">
-          <p className="text-sm text-text-secondary mb-4">
+          <p className="text-sm text-text-secondary mb-3">
             Practice this problem with an AI interviewer that asks follow-ups, probes edge cases, and gives feedback — just like a real interview.
+          </p>
+          <p className="text-xs text-text-muted mb-4 flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green shrink-0">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Your conversations and <span className="text-accent-green font-medium">API key are never stored on our server</span> — everything stays in your browser only.</span>
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             <button

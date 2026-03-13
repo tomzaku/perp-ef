@@ -248,9 +248,7 @@ export function QuestionDetail({
 
           {/* Mock Interview + Notes on mobile only */}
           <div className="lg:hidden mb-8">
-            <AuthGuard feature="use Mock Interview">
-              <MockInterview question={question} />
-            </AuthGuard>
+            <MockInterview question={question} />
           </div>
           <div className="lg:hidden mb-8">
             <AuthGuard feature="save notes">
@@ -416,9 +414,7 @@ export function QuestionDetail({
         {/* Right sidebar - desktop only */}
         <div className="hidden lg:block lg:flex-2">
           <div className="sticky top-4">
-            <AuthGuard feature="use Mock Interview">
-              <MockInterview question={question} />
-            </AuthGuard>
+            <MockInterview question={question} />
             <AuthGuard feature="save notes">
               <NotesSection
                 questionId={question.id}
