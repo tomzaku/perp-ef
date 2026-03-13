@@ -4,6 +4,26 @@ import { useAIChat, getApiKey, setApiKey } from '../hooks/useAIChat';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 
+// ─── Web Speech API helpers ──────────────────────────────────────────
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: { results: SpeechRecognitionResultList }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+}
+
+function getSpeechRecognition(): (new () => SpeechRecognitionInstance) | null {
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as
+    | (new () => SpeechRecognitionInstance)
+    | null;
+}
+
 interface MockInterviewProps {
   question: Question;
 }
@@ -18,6 +38,10 @@ export function MockInterview({ question }: MockInterviewProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [autoRead, setAutoRead] = useState(false);
   const lastReadIndexRef = useRef(-1);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingText, setRecordingText] = useState('');
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const { messages, isLoading, error, sendMessage, startInterview, reset } =
     useAIChat(question);
@@ -90,6 +114,95 @@ export function MockInterview({ question }: MockInterviewProps) {
     autoResize(inputRef.current);
   }, [input, autoResize]);
 
+  // ─── Voice recording (Speech-to-Text) ─────────────────────────────
+  const startRecording = useCallback(async () => {
+    const SpeechRec = getSpeechRecognition();
+    if (!SpeechRec) return;
+
+    // Request mic permission if needed
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+    } catch {
+      return;
+    }
+
+    const recognition = new SpeechRec();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    const baseText = input; // Text that was in the input before recording
+    let processedFinals = 0; // Track how many results we've already finalized
+    let accumulatedFinals = ''; // All finalized speech so far
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      // Only process new final results to avoid duplication
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          if (i >= processedFinals) {
+            const text = event.results[i][0].transcript.trim();
+            if (text) {
+              accumulatedFinals += (accumulatedFinals ? ' ' : '') + text;
+            }
+            processedFinals = i + 1;
+          }
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      const combined = baseText + (baseText && accumulatedFinals ? ' ' : '') + accumulatedFinals;
+      setInput(combined + (interim ? (combined ? ' ' : '') + interim : ''));
+      setRecordingText(interim);
+    };
+
+    recognition.onerror = (e) => {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        setIsRecording(false);
+        recognitionRef.current = null;
+      }
+    };
+
+    recognition.onend = () => {
+      // Auto-restart if still recording (browser stops after silence)
+      if (recognitionRef.current === recognition) {
+        try { recognition.start(); } catch { /* already stopped */ }
+      }
+    };
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsRecording(true);
+      setRecordingText('');
+    } catch {
+      // Speech recognition not available
+    }
+  }, [input]);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      const rec = recognitionRef.current;
+      recognitionRef.current = null;
+      rec.stop();
+    }
+    setIsRecording(false);
+    setRecordingText('');
+    // Focus textarea so user can edit/send
+    inputRef.current?.focus();
+  }, []);
+
+  // Cleanup recognition on unmount / reset
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
+
   const handleSaveApiKey = () => {
     const key = apiKeyInput.trim();
     if (key) {
@@ -110,6 +223,12 @@ export function MockInterview({ question }: MockInterviewProps) {
   };
 
   const handleReset = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setRecordingText('');
     reset();
     setInput('');
   };
@@ -285,17 +404,56 @@ export function MockInterview({ question }: MockInterviewProps) {
 
         {/* Input */}
         <div className="border-t border-border p-3">
+          {/* Recording indicator */}
+          {isRecording && (
+            <div className="flex items-center gap-2 mb-2 px-1 animate-fade-in">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-red opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-red" />
+              </span>
+              <span className="text-xs text-accent-red font-medium">Recording...</span>
+              {recordingText && (
+                <span className="text-xs text-text-muted italic truncate">{recordingText}</span>
+              )}
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your answer..."
+              placeholder={isRecording ? 'Listening...' : 'Type or hold mic to speak...'}
               rows={1}
               disabled={isLoading}
               className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted disabled:opacity-50 font-code min-h-[2.5rem] max-h-[200px]"
             />
+            {/* Mic button */}
+            {getSpeechRecognition() && (
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading}
+                className={`p-2 rounded-lg transition-all cursor-pointer shrink-0 ${
+                  isRecording
+                    ? 'bg-accent-red/10 text-accent-red border border-accent-red/30 hover:bg-accent-red/20'
+                    : 'bg-bg-tertiary text-text-muted border border-border hover:text-accent-purple hover:border-accent-purple/30'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                title={isRecording ? 'Stop recording' : 'Voice input'}
+              >
+                {isRecording ? (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="3" y="3" width="10" height="10" rx="1" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                )}
+              </button>
+            )}
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
@@ -306,7 +464,10 @@ export function MockInterview({ question }: MockInterviewProps) {
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-[10px] text-text-muted">
-              Enter to send, Shift+Enter for new line
+              {getSpeechRecognition()
+                ? 'Enter to send, Shift+Enter for new line, or use mic'
+                : 'Enter to send, Shift+Enter for new line'
+              }
             </span>
             <span className="text-[10px] text-text-muted">
               Powered by Claude
