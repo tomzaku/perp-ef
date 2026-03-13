@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface AnswerSessionProps {
   questionId: string;
@@ -130,6 +131,7 @@ function formatTime(seconds: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────
 type SessionState = 'idle' | 'answering' | 'done';
+type MicPermission = 'unknown' | 'prompting' | 'denied';
 
 export function AnswerSession({ questionId }: AnswerSessionProps) {
   const [sessionState, setSessionState] = useState<SessionState>('idle');
@@ -144,6 +146,8 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
   const [playbackTime, setPlaybackTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [webSpeechOk, setWebSpeechOk] = useState<boolean | null>(null);
+  const [micPermission, setMicPermission] = useState<MicPermission>('unknown');
+  const [showMicDialog, setShowMicDialog] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
@@ -156,8 +160,14 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const liveFinalRef = useRef('');
 
+  // Check existing permission state without triggering a prompt
   useEffect(() => {
-    probeWebSpeech().then(setWebSpeechOk);
+    navigator.permissions?.query({ name: 'microphone' as PermissionName }).then((status) => {
+      if (status.state === 'granted') {
+        setMicPermission('unknown'); // already granted, no dialog needed
+        probeWebSpeech().then(setWebSpeechOk);
+      }
+    }).catch(() => { /* permissions API not supported, that's fine */ });
   }, []);
 
   const cleanup = useCallback(() => {
@@ -186,6 +196,8 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
     setModelProgress(null);
     setPlaybackTime(0);
     setIsPlaying(false);
+    setShowMicDialog(false);
+    setMicPermission('unknown');
   }, []);
 
   useEffect(() => { cleanup(); }, [questionId, cleanup]);
@@ -230,7 +242,7 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
   }, []);
 
   // ─── Start answering (timer + recording + optional live STT) ────────
-  const startAnswering = useCallback(async () => {
+  const startAnsweringWithMic = useCallback(async (webSpeechOverride?: boolean) => {
     const stream = await startMicRecorder();
     if (!stream) return;
 
@@ -246,8 +258,9 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
     }, 1000);
 
     // Try live STT if available
+    const useSpeech = webSpeechOverride ?? webSpeechOk;
     const SpeechRec = getSpeechRecognition();
-    if (webSpeechOk && SpeechRec) {
+    if (useSpeech && SpeechRec) {
       const recognition = new SpeechRec();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -301,6 +314,40 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
       }
     }
   }, [startMicRecorder, webSpeechOk]);
+
+  // ─── Request mic permission + start ─────────────────────────────────
+  const handleStartClick = useCallback(async () => {
+    // Check if mic permission is already granted
+    try {
+      const status = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
+      if (status?.state === 'granted') {
+        // Already granted — ensure web speech probe is done before starting
+        const speechOk = await probeWebSpeech();
+        setWebSpeechOk(speechOk);
+        return startAnsweringWithMic(speechOk);
+      }
+    } catch { /* permissions API not supported, show dialog */ }
+
+    // Show permission explanation dialog
+    setShowMicDialog(true);
+  }, [startAnsweringWithMic]);
+
+  const requestMicAndStart = useCallback(async () => {
+    setShowMicDialog(false);
+    setMicPermission('prompting');
+    try {
+      // This triggers the browser's permission prompt
+      const testStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      testStream.getTracks().forEach(t => t.stop()); // Release immediately
+      setMicPermission('unknown');
+      // Probe web speech and wait for result before starting
+      const speechOk = await probeWebSpeech();
+      setWebSpeechOk(speechOk);
+      await startAnsweringWithMic(speechOk);
+    } catch {
+      setMicPermission('denied');
+    }
+  }, [startAnsweringWithMic]);
 
   // ─── Stop answering ─────────────────────────────────────────────────
   const stopAnswering = useCallback(() => {
@@ -373,19 +420,99 @@ export function AnswerSession({ questionId }: AnswerSessionProps) {
 
   // ─── Render ─────────────────────────────────────────────────────────
 
-  // Idle state: show "Start Answering" button
+  // Idle state: show "Start Answering" button + mic permission dialog
   if (sessionState === 'idle') {
     return (
       <div className="relative">
         <button
-          onClick={startAnswering}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30 hover:bg-accent-cyan/20"
+          onClick={handleStartClick}
+          disabled={micPermission === 'prompting'}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30 hover:bg-accent-cyan/20 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <svg width="10" height="12" viewBox="0 0 8 10" fill="currentColor">
-            <path d="M0 0L8 5L0 10Z" />
-          </svg>
-          Start Answering
+          {micPermission === 'prompting' ? (
+            <span className="animate-pulse">Requesting access...</span>
+          ) : (
+            <>
+              <svg width="10" height="12" viewBox="0 0 8 10" fill="currentColor">
+                <path d="M0 0L8 5L0 10Z" />
+              </svg>
+              Start Answering
+            </>
+          )}
         </button>
+
+        {/* Mic permission denied message */}
+        {micPermission === 'denied' && (
+          <div className="mt-2 bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2 text-xs text-accent-red animate-fade-in">
+            Microphone access was denied. Please allow microphone access in your browser settings and try again.
+          </div>
+        )}
+
+        {/* Mic permission explanation dialog — portalled to body */}
+        {showMicDialog && createPortal(
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setShowMicDialog(false)} />
+            <div className="fixed z-50 left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-bg-secondary border border-border rounded-xl shadow-2xl animate-fade-in">
+              <div className="p-5">
+                {/* Icon */}
+                <div className="w-10 h-10 rounded-full bg-accent-cyan/10 flex items-center justify-center mb-4">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-cyan">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                </div>
+
+                <h3 className="text-base font-display font-semibold text-text-primary mb-2">
+                  Microphone Access Required
+                </h3>
+                <p className="text-sm text-text-secondary mb-4 leading-relaxed">
+                  To practice answering interview questions, we need access to your microphone to:
+                </p>
+                <ul className="text-sm text-text-secondary space-y-2 mb-5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent-cyan mt-0.5">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
+                    Record your answer so you can play it back
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent-cyan mt-0.5">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
+                    Provide live transcription of your answer
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent-cyan mt-0.5">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
+                    Help you practice speaking your answers out loud
+                  </li>
+                </ul>
+                <p className="text-xs text-text-muted mb-5">
+                  Audio is processed locally and never sent to any server.
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={requestMicAndStart}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer bg-accent-cyan text-bg-primary hover:opacity-90"
+                  >
+                    Allow Microphone
+                  </button>
+                  <button
+                    onClick={() => setShowMicDialog(false)}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer border border-border text-text-secondary hover:bg-bg-hover"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>,
+          document.body
+        )}
 
         {/* Show transcript toggle if we have one from a previous session */}
         {transcript && (
