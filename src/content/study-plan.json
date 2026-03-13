@@ -374,5 +374,72 @@
       "ai-19",
       "ai-20"
     ]
+  },
+  {
+    "week": 18,
+    "title": "Database Fundamentals",
+    "category": "Backend",
+    "topics": [
+      "SQL JOINs & Aggregation",
+      "Indexing & Query Optimization",
+      "ACID Transactions",
+      "SQL vs NoSQL",
+      "Schema Design & Normalization",
+      "Database Migrations"
+    ],
+    "questionIds": [
+      "be-1",
+      "be-2",
+      "be-3",
+      "be-4",
+      "be-5",
+      "be-6"
+    ]
+  },
+  {
+    "week": 19,
+    "title": "Backend Architecture & Patterns",
+    "category": "Backend",
+    "topics": [
+      "HTTP Protocol",
+      "Middleware Pattern",
+      "ORMs vs Raw SQL",
+      "Background Jobs",
+      "Message Queues",
+      "Microservices vs Monolith"
+    ],
+    "questionIds": [
+      "be-7",
+      "be-8",
+      "be-9",
+      "be-10",
+      "be-11",
+      "be-12"
+    ]
+  },
+  {
+    "week": 20,
+    "title": "Infrastructure, Security & Scaling",
+    "category": "Backend",
+    "topics": [
+      "Docker & Containers",
+      "CI/CD Pipelines",
+      "Logging & Observability",
+      "Load Balancing",
+      "OWASP Security",
+      "Input Validation",
+      "Scaling Strategies",
+      "Caching"
+    ],
+    "questionIds": [
+      "be-13",
+      "be-14",
+      "be-15",
+      "be-16",
+      "be-17",
+      "be-18",
+      "be-19",
+      "be-20"
+    ]
   }
 ]

@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 const navItems: { path: string; label: string; icon: string; desc: string }[] = [
-  { path: '/', label: 'Study Plan', icon: '>>', desc: '15-week structured roadmap' },
+  { path: '/', label: 'Study Plan', icon: '>>', desc: '20-week structured roadmap' },
   { path: '/all', label: 'All Questions', icon: '{}', desc: 'Browse the full question bank' },
   { path: '/algorithm', label: 'Algorithm', icon: 'fn', desc: 'Data structures & algorithms (LeetCode-style)' },
   { path: '/javascript', label: 'JavaScript', icon: 'JS', desc: 'Core language concepts & implementations' },
@@ -45,7 +45,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
   }, [open]);
 
   function getCount(path: string) {
-    if (path === '/') return 15;
+    if (path === '/') return 20;
     if (path === '/all') return totalCount;
     const map: Record<string, string> = {
       '/algorithm': 'Algorithm',
