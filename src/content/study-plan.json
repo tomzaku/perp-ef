@@ -322,5 +322,57 @@
       "sd-14",
       "sd-15"
     ]
+  },
+  {
+    "week": 16,
+    "title": "AI Fundamentals & Prompt Engineering",
+    "category": "AI",
+    "topics": [
+      "Prompt Engineering",
+      "RAG",
+      "Embeddings",
+      "Fine-Tuning vs RAG",
+      "Hallucination",
+      "Chain-of-Thought"
+    ],
+    "questionIds": [
+      "ai-1",
+      "ai-2",
+      "ai-4",
+      "ai-5",
+      "ai-6",
+      "ai-8",
+      "ai-11",
+      "ai-15"
+    ]
+  },
+  {
+    "week": 17,
+    "title": "AI Agents, Tools & Modern AI Engineering",
+    "category": "AI",
+    "topics": [
+      "AI Agents",
+      "Function Calling",
+      "MCP",
+      "AI Skills",
+      "AI SDKs",
+      "Multi-Agent Systems",
+      "AI Coding Assistants",
+      "Cost Optimization"
+    ],
+    "questionIds": [
+      "ai-3",
+      "ai-7",
+      "ai-9",
+      "ai-10",
+      "ai-12",
+      "ai-13",
+      "ai-14",
+      "ai-16",
+      "ai-17",
+      "ai-18",
+      "ai-19",
+      "ai-20"
+    ]
   }
 ]

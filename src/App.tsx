@@ -231,6 +231,18 @@ function App() {
             }
           />
 
+          <Route
+            path="/backend"
+            element={
+              <QuestionListPage
+                title="Backend"
+                description="Core backend fundamentals — databases, HTTP, server architecture, infrastructure, DevOps, and security."
+                questions={questionsByCategory['Backend'] || []}
+                {...sharedProps}
+              />
+            }
+          />
+
           {/* Question Detail */}
           <Route path="/question/:id" element={<QuestionPage />} />
         </Routes>

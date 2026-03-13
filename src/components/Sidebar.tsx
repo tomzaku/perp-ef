@@ -20,6 +20,7 @@ const navItems: { path: string; label: string; icon: string; desc: string }[] = 
   { path: '/system-design', label: 'System Design', icon: 'SD', desc: 'Auth, payments, APIs & real-time systems' },
   { path: '/behavioral', label: 'Behavioral', icon: 'BQ', desc: 'STAR method, leadership & conflict stories' },
   { path: '/ai', label: 'AI', icon: 'AI', desc: 'Prompting, RAG, agents & LLM architecture' },
+  { path: '/backend', label: 'Backend', icon: 'BE', desc: 'Databases, APIs, infra & server-side fundamentals' },
 ];
 
 export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
@@ -56,6 +57,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
       '/system-design': 'System Design',
       '/behavioral': 'Behavioral',
       '/ai': 'AI',
+      '/backend': 'Backend',
     };
     return counts[map[path] || ''] || 0;
   }
@@ -67,12 +69,12 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
         <Link to="/" className="hover:opacity-80 transition-opacity">
           <h1 className="font-display text-lg font-bold tracking-tight text-text-primary">
             <span className="text-accent-cyan">&lt;</span>
-            FE
+            FS
             <span className="text-accent-cyan">/</span>
             Prep
             <span className="text-accent-cyan">&gt;</span>
           </h1>
-          <p className="text-xs text-text-muted mt-1">Frontend Interview Training</p>
+          <p className="text-xs text-text-muted mt-1">Full-Stack Interview Training</p>
         </Link>
         <button
           onClick={toggleTheme}
@@ -179,7 +181,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
           </svg>
         </button>
         <h1 className="font-display text-sm font-bold tracking-tight text-text-primary">
-          <span className="text-accent-cyan">&lt;</span>FE<span className="text-accent-cyan">/</span>Prep<span className="text-accent-cyan">&gt;</span>
+          <span className="text-accent-cyan">&lt;</span>FS<span className="text-accent-cyan">/</span>Prep<span className="text-accent-cyan">&gt;</span>
         </h1>
         <div className="flex items-center gap-2">
           <button
