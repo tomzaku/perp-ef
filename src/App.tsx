@@ -12,6 +12,7 @@ import { StudyPlanView } from './components/StudyPlanView';
 import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
 import { PathList, PathDetail } from './components/LearningPathView';
+import { SettingsPage } from './components/SettingsPage';
 
 function QuestionPage() {
   const { id } = useParams<{ id: string }>();
@@ -244,6 +245,9 @@ function App() {
               />
             }
           />
+
+          {/* Settings */}
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Question Detail */}
           <Route path="/question/:id" element={<QuestionPage />} />

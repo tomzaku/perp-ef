@@ -3,6 +3,7 @@ import type { Question } from '../types/question';
 import { useAIChat, getApiKey, setApiKey } from '../hooks/useAIChat';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
+import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
 
 // ─── Web Speech API helpers ──────────────────────────────────────────
 interface SpeechRecognitionInstance extends EventTarget {
@@ -48,24 +49,8 @@ export function MockInterview({ question }: MockInterviewProps) {
 
   // Auto-read new assistant messages
   const speakText = useCallback((text: string) => {
-    if (typeof speechSynthesis === 'undefined') return;
-    speechSynthesis.cancel();
-    const clean = text
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/#{1,6}\s/g, '')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/[>\-|]/g, '')
-      .replace(/\n{2,}/g, '. ')
-      .replace(/\n/g, ' ')
-      .trim();
-    if (!clean) return;
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = 'en-US';
-    utterance.rate = 1;
-    speechSynthesis.speak(utterance);
+    stopKokoroAudio();
+    speakWithKokoro(text).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -338,13 +323,13 @@ export function MockInterview({ question }: MockInterviewProps) {
           </button>
           <span className="text-border">|</span>
           <button
-            onClick={() => { speechSynthesis?.cancel(); handleReset(); }}
+            onClick={() => { stopKokoroAudio(); handleReset(); }}
             className="text-xs text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
           >
             Restart
           </button>
           <button
-            onClick={() => { speechSynthesis?.cancel(); setExpanded(false); handleReset(); }}
+            onClick={() => { stopKokoroAudio(); setExpanded(false); handleReset(); }}
             className="text-xs text-text-muted hover:text-accent-red transition-colors cursor-pointer"
           >
             End
