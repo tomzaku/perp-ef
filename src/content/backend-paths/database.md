@@ -11,7 +11,7 @@ keyInsights:
   - Normalization reduces duplication; denormalization improves read speed
   - Schema migrations must be backwards-compatible in production
   - NoSQL trades consistency guarantees for horizontal scalability
-questionIds: [be-1, be-2, be-3, be-4, be-5, be-6]
+questionIds: [be-1, be-2, be-3, be-4, be-5, be-6, be-33, be-34, be-35, be-36]
 ---
 
 ## Database Fundamentals

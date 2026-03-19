@@ -2,7 +2,7 @@
 id: be-4
 title: SQL vs NoSQL (When to Use What)
 category: Backend
-subcategory: Database
+subcategory: SQL vs NoSQL
 difficulty: Easy
 pattern: Architecture Decision
 companies: [Google, Amazon, Meta, Netflix, MongoDB]

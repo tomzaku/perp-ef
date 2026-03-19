@@ -2,7 +2,7 @@
 id: be-7
 title: HTTP Deep Dive (Methods, Headers, Status Codes, CORS)
 category: Backend
-subcategory: Architecture
+subcategory: HTTP & APIs
 difficulty: Easy
 pattern: Protocol Knowledge
 companies: [Google, Amazon, Meta, Stripe, Cloudflare]

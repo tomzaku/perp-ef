@@ -2,7 +2,7 @@
 id: be-9
 title: ORMs vs Query Builders vs Raw SQL
 category: Backend
-subcategory: Architecture
+subcategory: Data Access
 difficulty: Medium
 pattern: Abstraction Levels
 companies: [Shopify, Stripe, GitHub, Vercel, Prisma]

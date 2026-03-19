@@ -441,5 +441,81 @@
       "be-19",
       "be-20"
     ]
+  },
+  {
+    "week": 21,
+    "title": "Networking Fundamentals",
+    "category": "Backend",
+    "topics": [
+      "TCP vs UDP",
+      "3-Way Handshake",
+      "DNS Resolution",
+      "Socket Programming",
+      "Proxy & Reverse Proxy",
+      "URL Request Lifecycle"
+    ],
+    "questionIds": [
+      "be-21",
+      "be-22",
+      "be-23",
+      "be-24",
+      "be-25",
+      "be-26"
+    ]
+  },
+  {
+    "week": 22,
+    "title": "Operating System Concepts",
+    "category": "Backend",
+    "topics": [
+      "Process vs Thread",
+      "Concurrency & Locks",
+      "Inter-Process Communication",
+      "Virtual Memory & Paging",
+      "Stack vs Heap",
+      "System Calls"
+    ],
+    "questionIds": [
+      "be-27",
+      "be-28",
+      "be-29",
+      "be-30",
+      "be-31",
+      "be-32"
+    ]
+  },
+  {
+    "week": 23,
+    "title": "Database Advanced & Distributed Systems",
+    "category": "Backend",
+    "topics": [
+      "Database Replication",
+      "Database Sharding",
+      "CAP Theorem",
+      "SQL Injection Prevention"
+    ],
+    "questionIds": [
+      "be-33",
+      "be-34",
+      "be-35",
+      "be-36"
+    ]
+  },
+  {
+    "week": 24,
+    "title": "Security Deep Dive",
+    "category": "Backend",
+    "topics": [
+      "Cryptography Fundamentals",
+      "SSL/TLS & Certificates",
+      "DDoS Defense",
+      "Secret Management"
+    ],
+    "questionIds": [
+      "be-37",
+      "be-38",
+      "be-39",
+      "be-40"
+    ]
   }
 ]

@@ -2,7 +2,7 @@
 id: be-5
 title: Database Schema Design & Normalization
 category: Backend
-subcategory: Database
+subcategory: Schema Design
 difficulty: Medium
 pattern: Data Modeling
 companies: [Google, Amazon, Stripe, Shopify, Uber]

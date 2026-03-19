@@ -11,7 +11,7 @@ keyInsights:
   - Horizontal scaling requires stateless services
   - Caching is the most impactful performance optimization
   - Redis serves as both cache and lightweight message broker
-questionIds: [be-17, be-18, be-19, be-20]
+questionIds: [be-17, be-18, be-19, be-20, be-37, be-38, be-39, be-40]
 ---
 
 ## Security & Scaling

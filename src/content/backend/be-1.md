@@ -2,7 +2,7 @@
 id: be-1
 title: SQL Fundamentals (JOINs, Subqueries, GROUP BY)
 category: Backend
-subcategory: Database
+subcategory: SQL & Querying
 difficulty: Easy
 pattern: Query Patterns
 companies: [Google, Amazon, Meta, Stripe, Shopify]

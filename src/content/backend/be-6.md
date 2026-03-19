@@ -2,7 +2,7 @@
 id: be-6
 title: Database Migrations & Schema Evolution
 category: Backend
-subcategory: Database
+subcategory: Schema Design
 difficulty: Easy
 pattern: Operational Patterns
 companies: [Shopify, Stripe, GitHub, Vercel, Netflix]

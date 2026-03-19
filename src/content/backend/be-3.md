@@ -2,7 +2,7 @@
 id: be-3
 title: ACID Transactions & Isolation Levels
 category: Backend
-subcategory: Database
+subcategory: ACID & Transactions
 difficulty: Medium
 pattern: Data Integrity
 companies: [Google, Amazon, Stripe, Uber, Goldman Sachs]

@@ -2,7 +2,7 @@
 id: be-8
 title: Middleware Pattern & Request Pipeline
 category: Backend
-subcategory: Architecture
+subcategory: Middleware
 difficulty: Easy
 pattern: Middleware Chain
 companies: [Vercel, Shopify, Netflix, Stripe, Cloudflare]

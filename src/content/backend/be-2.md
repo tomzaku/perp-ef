@@ -2,7 +2,7 @@
 id: be-2
 title: Database Indexing & Query Optimization
 category: Backend
-subcategory: Database
+subcategory: Indexing & Optimization
 difficulty: Medium
 pattern: Performance Optimization
 companies: [Google, Amazon, Stripe, Shopify, Uber]
