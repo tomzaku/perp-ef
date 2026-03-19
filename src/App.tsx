@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
 import type { Question } from './types/question';
-import { allQuestions, studyPlan, learningPaths } from './data';
+import { allQuestions, studyPlan, learningPaths, backendPaths } from './data';
 import { useProgress } from './hooks/useProgress';
 import { useNotes } from './hooks/useNotes';
 import { useTheme } from './hooks/useTheme';
@@ -129,6 +129,9 @@ function App() {
                 paths={learningPaths}
                 questions={allQuestions}
                 isCompleted={isCompleted}
+                basePath="/algorithm"
+                title="Algorithm Learning Paths"
+                subtitle="Master each pattern with structured introductions, templates, and curated problem sets."
               />
             }
           />
@@ -139,6 +142,9 @@ function App() {
                 paths={learningPaths}
                 questions={allQuestions}
                 isCompleted={isCompleted}
+                basePath="/algorithm"
+                title="Algorithm Learning Paths"
+                subtitle=""
               />
             }
           />
@@ -234,14 +240,30 @@ function App() {
             }
           />
 
+          {/* Backend - Learning Paths */}
           <Route
             path="/backend"
             element={
-              <QuestionListPage
-                title="Backend"
-                description="Core backend fundamentals — databases, HTTP, server architecture, infrastructure, DevOps, and security."
-                questions={questionsByCategory['Backend'] || []}
-                {...sharedProps}
+              <PathList
+                paths={backendPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/backend"
+                title="Backend Learning Paths"
+                subtitle="Core backend fundamentals — databases, architecture, infrastructure, DevOps, and security."
+              />
+            }
+          />
+          <Route
+            path="/backend/path/:slug"
+            element={
+              <PathDetail
+                paths={backendPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/backend"
+                title="Backend Learning Paths"
+                subtitle=""
               />
             }
           />

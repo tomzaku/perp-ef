@@ -9,17 +9,20 @@ interface LearningPathViewProps {
   paths: LearningPathCategory[];
   questions: Question[];
   isCompleted: (id: string) => boolean;
+  basePath: string;
+  title: string;
+  subtitle: string;
 }
 
-function PathList({ paths, questions, isCompleted }: LearningPathViewProps) {
+function PathList({ paths, questions, isCompleted, basePath, title, subtitle }: LearningPathViewProps) {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
         <h1 className="text-xl sm:text-2xl font-display font-bold text-text-primary mb-2">
-          Algorithm Learning Paths
+          {title}
         </h1>
         <p className="text-sm text-text-secondary">
-          Master each pattern with structured introductions, templates, and curated problem sets.
+          {subtitle}
         </p>
       </div>
 
@@ -34,7 +37,7 @@ function PathList({ paths, questions, isCompleted }: LearningPathViewProps) {
           return (
             <Link
               key={path.slug}
-              to={`/algorithm/path/${path.slug}`}
+              to={`${basePath}/path/${path.slug}`}
               className="block border border-border bg-bg-card rounded-xl p-5 hover:border-accent-cyan/30 hover:bg-bg-hover transition-all group"
             >
               <div className="flex items-center gap-3 mb-3">
@@ -74,7 +77,7 @@ function PathList({ paths, questions, isCompleted }: LearningPathViewProps) {
   );
 }
 
-function PathDetail({ paths, questions, isCompleted }: LearningPathViewProps) {
+function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathViewProps) {
   const { slug } = useParams<{ slug: string }>();
   const path = paths.find((p) => p.slug === slug);
 
@@ -82,7 +85,7 @@ function PathDetail({ paths, questions, isCompleted }: LearningPathViewProps) {
     return (
       <div className="text-center py-16 text-text-muted">
         <p>Path not found</p>
-        <Link to="/algorithm" className="text-accent-cyan hover:underline text-sm mt-2 block">
+        <Link to={basePath} className="text-accent-cyan hover:underline text-sm mt-2 block">
           Back to paths
         </Link>
       </div>
@@ -97,7 +100,7 @@ function PathDetail({ paths, questions, isCompleted }: LearningPathViewProps) {
     <div className="max-w-4xl animate-fade-in">
       {/* Back */}
       <Link
-        to="/algorithm"
+        to={basePath}
         className="flex items-center gap-2 text-text-secondary hover:text-accent-cyan transition-colors mb-6 text-sm"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
