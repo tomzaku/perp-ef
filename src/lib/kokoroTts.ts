@@ -1,6 +1,6 @@
 import { KokoroTTS } from 'kokoro-js';
 import { cleanMarkdown } from './cleanMarkdown';
-import { getTtsEngine } from '../hooks/useTtsSettings';
+import { getTtsEngine, getTtsVoice, getTtsSpeed } from '../hooks/useTtsSettings';
 
 const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 const TAG = '[tts]';
@@ -85,7 +85,7 @@ function speakNative(
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-US';
-  utterance.rate = options?.speed ?? 1;
+  utterance.rate = options?.speed ?? getTtsSpeed();
 
   return new Promise<void>((resolve) => {
     utterance.onstart = () => options?.onStart?.();
@@ -214,8 +214,8 @@ export async function speakWithKokoro(
   const chunks = splitIntoChunks(clean);
   log(`split into ${chunks.length} chunks`);
 
-  const voice = (options?.voice ?? 'af_heart') as 'af_heart';
-  const speed = options?.speed ?? 1;
+  const voice = (options?.voice ?? getTtsVoice()) as 'af_heart';
+  const speed = options?.speed ?? getTtsSpeed();
 
   // Generate a chunk and return its blob
   const generateChunk = async (i: number): Promise<Blob | null> => {
