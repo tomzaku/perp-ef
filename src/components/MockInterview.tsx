@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Question } from '../types/question';
+import type { Question, SavedConversation } from '../types/question';
 import { useAIChat, getApiKey, setApiKey } from '../hooks/useAIChat';
+import { useConversations } from '../hooks/useConversations';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
@@ -44,8 +45,57 @@ export function MockInterview({ question }: MockInterviewProps) {
   const [recordingText, setRecordingText] = useState('');
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
-  const { messages, isLoading, error, sendMessage, startInterview, reset } =
+  const [showMenu, setShowMenu] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const { messages, isLoading, error, sendMessage, startInterview, reset, setMessages } =
     useAIChat(question);
+  const { conversations, saveConversation, updateConversation, deleteConversation } =
+    useConversations(question.id);
+
+  // Close menu on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
+
+  const handleLoadConversation = useCallback((conv: SavedConversation) => {
+    setMessages(conv.messages);
+    setActiveConvId(conv.id);
+    setExpanded(true);
+    setShowHistory(false);
+    setInput('');
+  }, [setMessages]);
+
+  const handleDeleteConversation = useCallback((id: string) => {
+    deleteConversation(id);
+    if (activeConvId === id) setActiveConvId(null);
+  }, [deleteConversation, activeConvId]);
+
+  // Auto-save after each assistant response
+  const prevMessageCountRef = useRef(0);
+  useEffect(() => {
+    if (isLoading || messages.length === 0) return;
+    // Only save when a new message was added (not on load)
+    if (messages.length > prevMessageCountRef.current && messages[messages.length - 1].role === 'assistant') {
+      if (activeConvId) {
+        updateConversation(activeConvId, messages);
+      } else {
+        const conv = saveConversation(messages);
+        setActiveConvId(conv.id);
+      }
+    }
+    prevMessageCountRef.current = messages.length;
+  }, [messages, isLoading, activeConvId, saveConversation, updateConversation]);
 
   // Auto-read new assistant messages
   const speakText = useCallback((text: string) => {
@@ -245,6 +295,17 @@ export function MockInterview({ question }: MockInterviewProps) {
               </svg>
               Start Mock Interview
             </button>
+            {conversations.length > 0 && (
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="flex items-center gap-1.5 text-xs text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                History ({conversations.length})
+              </button>
+            )}
             <button
               onClick={() => setShowApiKeyForm(!showApiKeyForm)}
               className="text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
@@ -299,6 +360,50 @@ export function MockInterview({ question }: MockInterviewProps) {
               </button>
             </div>
           )}
+
+          {/* History panel in start view */}
+          {showHistory && conversations.length > 0 && (
+            <div className="mt-4 border border-border rounded-lg overflow-hidden animate-fade-in">
+              <div className="px-3 py-2 border-b border-border flex items-center justify-between bg-bg-tertiary/50">
+                <span className="text-xs font-medium text-text-secondary">Previous sessions</span>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
+                {conversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className="px-3 py-2 flex items-center gap-2 hover:bg-bg-tertiary transition-colors group"
+                  >
+                    <button
+                      onClick={() => handleLoadConversation(conv)}
+                      className="flex-1 text-left cursor-pointer min-w-0"
+                    >
+                      <div className="text-xs text-text-primary truncate">{conv.title}</div>
+                      <div className="text-[10px] text-text-muted mt-0.5">
+                        {conv.messages.length} messages
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteConversation(conv.id)}
+                      className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-accent-red transition-all cursor-pointer p-1 shrink-0"
+                      title="Delete"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     );
@@ -310,6 +415,7 @@ export function MockInterview({ question }: MockInterviewProps) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-display font-bold text-accent-purple uppercase tracking-wider">
           Mock Interview
+          {activeConvId && <span className="text-[10px] text-text-muted font-normal ml-2 normal-case tracking-normal">(saved)</span>}
         </h2>
         <div className="flex items-center gap-2">
           <button
@@ -323,19 +429,112 @@ export function MockInterview({ question }: MockInterviewProps) {
           </button>
           <span className="text-border">|</span>
           <button
-            onClick={() => { stopKokoroAudio(); handleReset(); }}
+            onClick={() => { stopKokoroAudio(); handleReset(); setActiveConvId(null); }}
             className="text-xs text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
           >
             Restart
           </button>
           <button
-            onClick={() => { stopKokoroAudio(); setExpanded(false); handleReset(); }}
+            onClick={() => { stopKokoroAudio(); setExpanded(false); handleReset(); setActiveConvId(null); }}
             className="text-xs text-text-muted hover:text-accent-red transition-colors cursor-pointer"
           >
             End
           </button>
+
+          {/* Menu icon */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1 text-text-muted hover:text-text-secondary transition-colors cursor-pointer rounded"
+              title="Options"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="12" cy="19" r="2" />
+              </svg>
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-bg-card border border-border rounded-lg shadow-lg z-50 py-1 animate-fade-in">
+                <div className="px-3 py-2 text-[10px] text-text-muted flex items-center gap-1.5 border-b border-border">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Auto-saving enabled
+                </div>
+                <button
+                  onClick={() => { setShowHistory(!showHistory); setShowMenu(false); }}
+                  className="w-full text-left px-3 py-2 text-xs text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer flex items-center gap-2"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {showHistory ? 'Hide history' : 'Conversation history'}
+                  {conversations.length > 0 && (
+                    <span className="ml-auto bg-accent-purple/20 text-accent-purple text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                      {conversations.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Conversation history panel */}
+      {showHistory && (
+        <div className="mb-3 bg-bg-card border border-border rounded-lg overflow-hidden animate-fade-in">
+          <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+            <span className="text-xs font-medium text-text-secondary">Saved conversations</span>
+            <button
+              onClick={() => setShowHistory(false)}
+              className="text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          {conversations.length === 0 ? (
+            <div className="px-3 py-4 text-xs text-text-muted text-center">
+              No saved conversations yet
+            </div>
+          ) : (
+            <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className={`px-3 py-2 flex items-center gap-2 hover:bg-bg-tertiary transition-colors group ${
+                    activeConvId === conv.id ? 'bg-accent-purple/5 border-l-2 border-l-accent-purple' : ''
+                  }`}
+                >
+                  <button
+                    onClick={() => handleLoadConversation(conv)}
+                    className="flex-1 text-left cursor-pointer min-w-0"
+                  >
+                    <div className="text-xs text-text-primary truncate">{conv.title}</div>
+                    <div className="text-[10px] text-text-muted mt-0.5">
+                      {conv.messages.length} messages
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteConversation(conv.id)}
+                    className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-accent-red transition-all cursor-pointer p-1 shrink-0"
+                    title="Delete"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-bg-card border border-accent-purple/20 rounded-lg overflow-hidden">
         {/* Messages */}

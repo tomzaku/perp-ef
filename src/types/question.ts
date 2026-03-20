@@ -73,6 +73,20 @@ export interface StudyPlanItem {
   questionIds: string[];
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface SavedConversation {
+  id: string;
+  questionId: string;
+  title: string;
+  messages: ConversationMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface LearningPathCategory {
   slug: string;
   title: string;

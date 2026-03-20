@@ -185,5 +185,5 @@ export function useAIChat(question: Question) {
     setError(null);
   }, []);
 
-  return { messages, isLoading, error, sendMessage, startInterview, abort, reset };
+  return { messages, isLoading, error, sendMessage, startInterview, abort, reset, setMessages };
 }
