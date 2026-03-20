@@ -10,7 +10,7 @@ keyInsights:
   - Requires sorted input for converging pointers
   - Same-direction pointers useful for in-place modifications
   - Can be combined with binary search for three-sum type problems
-questionIds: [algo-9, algo-10, algo-11, algo-12]
+questionIds: [algo-9, algo-10, algo-11, algo-12, algo-56, algo-57, algo-58, algo-59, algo-60, algo-61]
 ---
 
 ## Two Pointers

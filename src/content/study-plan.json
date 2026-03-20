@@ -17,7 +17,13 @@
       "algo-5",
       "algo-6",
       "algo-9",
-      "algo-10"
+      "algo-10",
+      "algo-56",
+      "algo-57",
+      "algo-58",
+      "algo-59",
+      "algo-60",
+      "algo-61"
     ]
   },
   {
@@ -34,6 +40,13 @@
       "algo-13",
       "algo-14",
       "algo-15",
+      "algo-62",
+      "algo-63",
+      "algo-64",
+      "algo-65",
+      "algo-66",
+      "algo-67",
+      "algo-68",
       "algo-16",
       "algo-17",
       "algo-18",
@@ -108,6 +121,34 @@
   },
   {
     "week": 6,
+    "title": "Trie & Bit Manipulation",
+    "category": "Algorithm",
+    "topics": [
+      "Prefix Tree",
+      "Trie Operations",
+      "XOR Tricks",
+      "Bit Counting",
+      "Bitwise Arithmetic"
+    ],
+    "questionIds": [
+      "algo-trie-1",
+      "algo-trie-2",
+      "algo-trie-3",
+      "algo-trie-4",
+      "algo-trie-5",
+      "algo-trie-6",
+      "algo-trie-7",
+      "algo-bit-1",
+      "algo-bit-2",
+      "algo-bit-3",
+      "algo-bit-4",
+      "algo-bit-5",
+      "algo-bit-6",
+      "algo-bit-7"
+    ]
+  },
+  {
+    "week": 7,
     "title": "JavaScript Core Concepts",
     "category": "JavaScript",
     "topics": [
@@ -127,7 +168,7 @@
     ]
   },
   {
-    "week": 7,
+    "week": 8,
     "title": "JavaScript Patterns & Async",
     "category": "JavaScript",
     "topics": [
@@ -149,7 +190,7 @@
     ]
   },
   {
-    "week": 8,
+    "week": 9,
     "title": "Node.js Deep Dive",
     "category": "Node.js",
     "topics": [
@@ -171,7 +212,7 @@
     ]
   },
   {
-    "week": 9,
+    "week": 10,
     "title": "React Core & Hooks",
     "category": "React",
     "topics": [
@@ -193,7 +234,7 @@
     ]
   },
   {
-    "week": 10,
+    "week": 11,
     "title": "React Advanced & Design Systems",
     "category": "React",
     "topics": [
@@ -212,7 +253,7 @@
     ]
   },
   {
-    "week": 11,
+    "week": 12,
     "title": "Design System Fundamentals",
     "category": "Design System",
     "topics": [
@@ -235,7 +276,7 @@
     ]
   },
   {
-    "week": 12,
+    "week": 13,
     "title": "OOP & SOLID Principles",
     "category": "Design Patterns",
     "topics": [
@@ -256,7 +297,7 @@
     ]
   },
   {
-    "week": 13,
+    "week": 14,
     "title": "Design Patterns in JavaScript",
     "category": "Design Patterns",
     "topics": [
@@ -280,7 +321,7 @@
     ]
   },
   {
-    "week": 14,
+    "week": 15,
     "title": "Authentication & Security",
     "category": "System Design",
     "topics": [
@@ -299,7 +340,7 @@
     ]
   },
   {
-    "week": 15,
+    "week": 16,
     "title": "Payment, API Design & Real-time",
     "category": "System Design",
     "topics": [
@@ -324,7 +365,7 @@
     ]
   },
   {
-    "week": 16,
+    "week": 17,
     "title": "AI Fundamentals & Prompt Engineering",
     "category": "AI",
     "topics": [
@@ -347,7 +388,7 @@
     ]
   },
   {
-    "week": 17,
+    "week": 18,
     "title": "AI Agents, Tools & Modern AI Engineering",
     "category": "AI",
     "topics": [
@@ -376,7 +417,7 @@
     ]
   },
   {
-    "week": 18,
+    "week": 19,
     "title": "Database Fundamentals",
     "category": "Backend",
     "topics": [
@@ -397,7 +438,7 @@
     ]
   },
   {
-    "week": 19,
+    "week": 20,
     "title": "Backend Architecture & Patterns",
     "category": "Backend",
     "topics": [
@@ -418,7 +459,7 @@
     ]
   },
   {
-    "week": 20,
+    "week": 21,
     "title": "Infrastructure, Security & Scaling",
     "category": "Backend",
     "topics": [
@@ -443,7 +484,7 @@
     ]
   },
   {
-    "week": 21,
+    "week": 22,
     "title": "Networking Fundamentals",
     "category": "Backend",
     "topics": [
@@ -464,7 +505,7 @@
     ]
   },
   {
-    "week": 22,
+    "week": 23,
     "title": "Operating System Concepts",
     "category": "Backend",
     "topics": [
@@ -485,7 +526,7 @@
     ]
   },
   {
-    "week": 23,
+    "week": 24,
     "title": "Database Advanced & Distributed Systems",
     "category": "Backend",
     "topics": [
@@ -502,7 +543,7 @@
     ]
   },
   {
-    "week": 24,
+    "week": 25,
     "title": "Security Deep Dive",
     "category": "Backend",
     "topics": [
