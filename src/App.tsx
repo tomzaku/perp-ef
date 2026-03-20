@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Routes, Route, useParams } from 'react-router-dom';
+import { useMemo, useEffect, useRef } from 'react';
+import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import type { Question } from './types/question';
 import { allQuestions, studyPlan, learningPaths, backendPaths } from './data';
 import { useProgress } from './hooks/useProgress';
@@ -50,7 +50,16 @@ function QuestionPage() {
   );
 }
 
+function ScrollToTop({ containerRef }: { containerRef: React.RefObject<HTMLElement | null> }) {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    containerRef.current?.scrollTo(0, 0);
+  }, [pathname, containerRef]);
+  return null;
+}
+
 function App() {
+  const mainRef = useRef<HTMLElement>(null);
   const themeValue = useTheme();
   const {
     completedCount,
@@ -94,7 +103,8 @@ function App() {
         totalCount={allQuestions.length}
       />
 
-      <main className="flex-1 p-4 pt-16 lg:p-8 lg:pt-8 overflow-y-auto max-h-screen">
+      <main ref={mainRef} className="flex-1 p-4 pt-16 lg:p-8 lg:pt-8 overflow-y-auto max-h-screen">
+        <ScrollToTop containerRef={mainRef} />
         <Routes>
           {/* Study Plan */}
           <Route
