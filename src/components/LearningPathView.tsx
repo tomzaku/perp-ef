@@ -5,6 +5,7 @@ import type { Question } from '../types/question';
 import { CodeBlock } from './CodeBlock';
 import { DifficultyBadge } from './DifficultyBadge';
 import { Markdown } from './Markdown';
+import { AskChatGpt } from './AskChatGpt';
 
 interface LearningPathViewProps {
   paths: LearningPathCategory[];
@@ -450,6 +451,8 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
           </div>
         </aside>
       </div>
+
+      <AskChatGpt title={path.title} description={path.description} />
     </div>
   );
 }

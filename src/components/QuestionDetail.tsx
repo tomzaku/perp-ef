@@ -11,6 +11,7 @@ import { AnswerSession } from './AnswerSession';
 import { MockInterview } from './MockInterview';
 import { ReadAloud } from './ReadAloud';
 import { AuthGuard } from './AuthGuard';
+import { AskChatGpt } from './AskChatGpt';
 import { testConfigs } from '../data';
 
 interface QuestionDetailProps {
@@ -53,7 +54,6 @@ export function QuestionDetail({
   const [showBruteForce, setShowBruteForce] = useState(false);
   const [showBruteForceExplanation, setShowBruteForceExplanation] = useState(false);
   const [showTakeaway, setShowTakeaway] = useState(false);
-
   return (
     <div className="animate-fade-in">
       {/* Sticky header bar */}
@@ -404,6 +404,8 @@ export function QuestionDetail({
           </div>
         </div>
       </div>
+
+      <AskChatGpt title={question.title} description={question.description} />
     </div>
   );
 }
