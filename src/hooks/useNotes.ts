@@ -1,25 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { QuestionNotes, NoteVersion } from '../types/question';
 import { supabase } from '../lib/supabase';
+import { createLocalStorage, syncRemote } from '../lib/persist';
 import { useAuth } from './useAuth';
 
-const STORAGE_KEY = 'fe-interview-notes';
-
-function loadLocal(): Record<string, QuestionNotes> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function saveLocal(notes: Record<string, QuestionNotes>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-}
+const storage = createLocalStorage<Record<string, QuestionNotes>>('fe-interview-notes');
 
 export function useNotes() {
   const { user } = useAuth();
-  const [allNotes, setAllNotes] = useState<Record<string, QuestionNotes>>(loadLocal);
+  const [allNotes, setAllNotes] = useState<Record<string, QuestionNotes>>(() => storage.load({}));
 
   // Load from Supabase when user logs in
   useEffect(() => {
@@ -49,7 +38,7 @@ export function useNotes() {
       });
 
       // Merge local + remote (dedupe by id)
-      const local = loadLocal();
+      const local = storage.load({});
       const merged: Record<string, QuestionNotes> = { ...remote };
 
       for (const [qid, localNotes] of Object.entries(local)) {
@@ -68,14 +57,16 @@ export function useNotes() {
 
         // Push local-only notes to Supabase
         if (toUpload.length > 0) {
-          await supabase!.from('user_notes').upsert(
-            toUpload.map((v) => ({
-              id: v.id,
-              user_id: user!.id,
-              question_id: qid,
-              content: v.content,
-              created_at: v.createdAt,
-            }))
+          syncRemote(user!.id, (db, uid) =>
+            db.from('user_notes').upsert(
+              toUpload.map((v) => ({
+                id: v.id,
+                user_id: uid,
+                question_id: qid,
+                content: v.content,
+                created_at: v.createdAt,
+              }))
+            )
           );
         }
       }
@@ -86,7 +77,7 @@ export function useNotes() {
       }
 
       setAllNotes(merged);
-      saveLocal(merged);
+      storage.save(merged);
     }
 
     fetchNotes();
@@ -116,22 +107,19 @@ export function useNotes() {
           versions: [...existing.versions, newVersion],
         },
       };
-      saveLocal(updated);
+      storage.save(updated);
       return updated;
     });
 
-    // Sync to Supabase
-    if (user && supabase) {
-      supabase.from('user_notes')
-        .insert({
-          id: newVersion.id,
-          user_id: user.id,
-          question_id: questionId,
-          content,
-          created_at: newVersion.createdAt,
-        })
-        .then(() => {});
-    }
+    syncRemote(user?.id, (db, uid) =>
+      db.from('user_notes').insert({
+        id: newVersion.id,
+        user_id: uid,
+        question_id: questionId,
+        content,
+        created_at: newVersion.createdAt,
+      })
+    );
   }, [user]);
 
   const updateNote = useCallback((questionId: string, noteId: string, content: string) => {
@@ -147,18 +135,13 @@ export function useNotes() {
           ),
         },
       };
-      saveLocal(updated);
+      storage.save(updated);
       return updated;
     });
 
-    // Sync to Supabase
-    if (user && supabase) {
-      supabase.from('user_notes')
-        .update({ content })
-        .eq('user_id', user.id)
-        .eq('id', noteId)
-        .then(() => {});
-    }
+    syncRemote(user?.id, (db, uid) =>
+      db.from('user_notes').update({ content }).eq('user_id', uid).eq('id', noteId)
+    );
   }, [user]);
 
   const deleteNote = useCallback((questionId: string, noteId: string) => {
@@ -172,18 +155,13 @@ export function useNotes() {
           versions: existing.versions.filter((v) => v.id !== noteId),
         },
       };
-      saveLocal(updated);
+      storage.save(updated);
       return updated;
     });
 
-    // Sync to Supabase
-    if (user && supabase) {
-      supabase.from('user_notes')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('id', noteId)
-        .then(() => {});
-    }
+    syncRemote(user?.id, (db, uid) =>
+      db.from('user_notes').delete().eq('user_id', uid).eq('id', noteId)
+    );
   }, [user]);
 
   return { getNotes, addNote, updateNote, deleteNote };

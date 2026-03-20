@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { createLocalStorage, syncRemote } from '../lib/persist';
 import { useAuth } from './useAuth';
 
-const STORAGE_KEY = 'fe-interview-progress';
+const storage = createLocalStorage<{ completed: string[]; bookmarked: string[] }>('fe-interview-progress');
 
 interface ProgressState {
   completed: Set<string>;
@@ -18,32 +19,20 @@ interface ProgressState {
   _mergeRemote: (remoteCompleted: string[], remoteBookmarked: string[], userId: string) => void;
 }
 
-function loadLocal(): { completed: Set<string>; bookmarked: Set<string> } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        completed: new Set(parsed.completed || []),
-        bookmarked: new Set(parsed.bookmarked || []),
-      };
-    }
-  } catch {}
-  return { completed: new Set(), bookmarked: new Set() };
+function loadSets() {
+  const raw = storage.load({ completed: [], bookmarked: [] });
+  return {
+    completed: new Set(raw.completed),
+    bookmarked: new Set(raw.bookmarked),
+  };
 }
 
-function saveLocal(completed: Set<string>, bookmarked: Set<string>) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      completed: Array.from(completed),
-      bookmarked: Array.from(bookmarked),
-    })
-  );
+function saveSets(completed: Set<string>, bookmarked: Set<string>) {
+  storage.save({ completed: Array.from(completed), bookmarked: Array.from(bookmarked) });
 }
 
 export const useProgressStore = create<ProgressState>()((set, get) => {
-  const local = loadLocal();
+  const local = loadSets();
 
   return {
     completed: local.completed,
@@ -54,56 +43,30 @@ export const useProgressStore = create<ProgressState>()((set, get) => {
       const { completed, bookmarked } = get();
       const next = new Set(completed);
       const removing = next.has(id);
-      if (removing) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      saveLocal(next, bookmarked);
+      if (removing) next.delete(id); else next.add(id);
+      saveSets(next, bookmarked);
       set({ completed: next });
 
-      if (userId && supabase) {
-        if (removing) {
-          supabase.from('user_progress')
-            .delete()
-            .eq('user_id', userId)
-            .eq('question_id', id)
-            .eq('type', 'completed')
-            .then(() => {});
-        } else {
-          supabase.from('user_progress')
-            .upsert({ user_id: userId, question_id: id, type: 'completed' }, { onConflict: 'user_id,question_id,type' })
-            .then(() => {});
-        }
-      }
+      syncRemote(userId, (db, uid) =>
+        removing
+          ? db.from('user_progress').delete().eq('user_id', uid).eq('question_id', id).eq('type', 'completed')
+          : db.from('user_progress').upsert({ user_id: uid, question_id: id, type: 'completed' }, { onConflict: 'user_id,question_id,type' })
+      );
     },
 
     toggleBookmarked: (id: string, userId?: string) => {
       const { completed, bookmarked } = get();
       const next = new Set(bookmarked);
       const removing = next.has(id);
-      if (removing) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      saveLocal(completed, next);
+      if (removing) next.delete(id); else next.add(id);
+      saveSets(completed, next);
       set({ bookmarked: next });
 
-      if (userId && supabase) {
-        if (removing) {
-          supabase.from('user_progress')
-            .delete()
-            .eq('user_id', userId)
-            .eq('question_id', id)
-            .eq('type', 'bookmarked')
-            .then(() => {});
-        } else {
-          supabase.from('user_progress')
-            .upsert({ user_id: userId, question_id: id, type: 'bookmarked' }, { onConflict: 'user_id,question_id,type' })
-            .then(() => {});
-        }
-      }
+      syncRemote(userId, (db, uid) =>
+        removing
+          ? db.from('user_progress').delete().eq('user_id', uid).eq('question_id', id).eq('type', 'bookmarked')
+          : db.from('user_progress').upsert({ user_id: uid, question_id: id, type: 'bookmarked' }, { onConflict: 'user_id,question_id,type' })
+      );
     },
 
     isCompleted: (id: string) => get().completed.has(id),
@@ -112,7 +75,7 @@ export const useProgressStore = create<ProgressState>()((set, get) => {
     bookmarkedCount: () => get().bookmarked.size,
 
     _mergeRemote: (remoteCompleted: string[], remoteBookmarked: string[], userId: string) => {
-      const local = loadLocal();
+      const local = loadSets();
       const merged = {
         completed: new Set([...local.completed, ...remoteCompleted]),
         bookmarked: new Set([...local.bookmarked, ...remoteBookmarked]),
@@ -130,11 +93,13 @@ export const useProgressStore = create<ProgressState>()((set, get) => {
           toInsert.push({ user_id: userId, question_id: id, type: 'bookmarked' });
         }
       }
-      if (toInsert.length > 0 && supabase) {
-        supabase.from('user_progress').upsert(toInsert, { onConflict: 'user_id,question_id,type' }).then(() => {});
+      if (toInsert.length > 0) {
+        syncRemote(userId, (db) =>
+          db.from('user_progress').upsert(toInsert, { onConflict: 'user_id,question_id,type' })
+        );
       }
 
-      saveLocal(merged.completed, merged.bookmarked);
+      saveSets(merged.completed, merged.bookmarked);
       set({ completed: merged.completed, bookmarked: merged.bookmarked, _synced: true });
     },
   };
@@ -145,7 +110,6 @@ export function useProgress() {
   const { user } = useAuth();
   const store = useProgressStore();
 
-  // Sync with Supabase when user logs in
   useEffect(() => {
     if (!user || !supabase || store._synced) return;
 

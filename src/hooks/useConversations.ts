@@ -1,28 +1,17 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { SavedConversation, ConversationMessage } from '../types/question';
 import { supabase } from '../lib/supabase';
+import { createLocalStorage, syncRemote } from '../lib/persist';
 import { useAuth } from './useAuth';
 
-const STORAGE_KEY = 'fe-interview-conversations';
-
-function loadLocal(): SavedConversation[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
-}
-
-function saveLocal(conversations: SavedConversation[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
-}
+const storage = createLocalStorage<SavedConversation[]>('fe-interview-conversations');
 
 export function useConversations(questionId: string) {
   const { user } = useAuth();
+  const [, setAllConversations] = useState<SavedConversation[]>(() => storage.load([]));
   const [conversations, setConversations] = useState<SavedConversation[]>(() =>
-    loadLocal().filter((c) => c.questionId === questionId)
+    storage.load([]).filter((c) => c.questionId === questionId)
   );
-  const [allConversations, setAllConversations] = useState<SavedConversation[]>(loadLocal);
 
   // Load from Supabase when user logs in
   useEffect(() => {
@@ -48,7 +37,7 @@ export function useConversations(questionId: string) {
       }));
 
       // Merge local + remote (dedupe by id, prefer newer updatedAt)
-      const local = loadLocal();
+      const local = storage.load([]);
       const mergedMap = new Map<string, SavedConversation>();
 
       for (const c of remote) mergedMap.set(c.id, c);
@@ -66,16 +55,18 @@ export function useConversations(questionId: string) {
 
       // Push local-only conversations to Supabase
       if (toUpload.length > 0) {
-        await supabase!.from('interview_conversations').upsert(
-          toUpload.map((c) => ({
-            id: c.id,
-            user_id: user!.id,
-            question_id: c.questionId,
-            title: c.title,
-            messages: c.messages,
-            created_at: c.createdAt,
-            updated_at: c.updatedAt,
-          }))
+        syncRemote(user!.id, (db, uid) =>
+          db.from('interview_conversations').upsert(
+            toUpload.map((c) => ({
+              id: c.id,
+              user_id: uid,
+              question_id: c.questionId,
+              title: c.title,
+              messages: c.messages,
+              created_at: c.createdAt,
+              updated_at: c.updatedAt,
+            }))
+          )
         );
       }
 
@@ -85,7 +76,7 @@ export function useConversations(questionId: string) {
 
       setAllConversations(merged);
       setConversations(merged.filter((c) => c.questionId === questionId));
-      saveLocal(merged);
+      storage.save(merged);
     }
 
     fetchConversations();
@@ -106,26 +97,22 @@ export function useConversations(questionId: string) {
 
       setAllConversations((prev) => {
         const updated = [newConv, ...prev];
-        saveLocal(updated);
+        storage.save(updated);
         return updated;
       });
       setConversations((prev) => [newConv, ...prev]);
 
-      // Sync to Supabase
-      if (user && supabase) {
-        supabase
-          .from('interview_conversations')
-          .insert({
-            id: newConv.id,
-            user_id: user.id,
-            question_id: questionId,
-            title: newConv.title,
-            messages: newConv.messages,
-            created_at: newConv.createdAt,
-            updated_at: newConv.updatedAt,
-          })
-          .then(() => {});
-      }
+      syncRemote(user?.id, (db, uid) =>
+        db.from('interview_conversations').insert({
+          id: newConv.id,
+          user_id: uid,
+          question_id: questionId,
+          title: newConv.title,
+          messages: newConv.messages,
+          created_at: newConv.createdAt,
+          updated_at: newConv.updatedAt,
+        })
+      );
 
       return newConv;
     },
@@ -143,19 +130,14 @@ export function useConversations(questionId: string) {
 
       setAllConversations((prev) => {
         const updated = update(prev);
-        saveLocal(updated);
+        storage.save(updated);
         return updated;
       });
       setConversations((prev) => update(prev));
 
-      if (user && supabase) {
-        supabase
-          .from('interview_conversations')
-          .update({ messages, updated_at: now })
-          .eq('user_id', user.id)
-          .eq('id', id)
-          .then(() => {});
-      }
+      syncRemote(user?.id, (db, uid) =>
+        db.from('interview_conversations').update({ messages, updated_at: now }).eq('user_id', uid).eq('id', id)
+      );
     },
     [user]
   );
@@ -167,19 +149,14 @@ export function useConversations(questionId: string) {
 
       setAllConversations((prev) => {
         const updated = remove(prev);
-        saveLocal(updated);
+        storage.save(updated);
         return updated;
       });
       setConversations((prev) => remove(prev));
 
-      if (user && supabase) {
-        supabase
-          .from('interview_conversations')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('id', id)
-          .then(() => {});
-      }
+      syncRemote(user?.id, (db, uid) =>
+        db.from('interview_conversations').delete().eq('user_id', uid).eq('id', id)
+      );
     },
     [user]
   );
