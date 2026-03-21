@@ -10,26 +10,29 @@ export interface Learning {
   corrected: string;
   explanation: string;
   createdAt: number;
+  conversationId?: string;
 }
 
 interface LearningsState {
   items: Learning[];
-  addItems: (items: Omit<Learning, 'id' | 'createdAt'>[]) => void;
+  addItems: (items: Omit<Learning, 'id' | 'createdAt'>[], conversationId?: string) => void;
   removeItem: (id: string) => void;
   clear: () => void;
+  clearByConversation: (conversationId: string) => void;
 }
 
 export const useLearnings = create<LearningsState>()(
   persist(
     (set) => ({
       items: [],
-      addItems: (newItems) =>
+      addItems: (newItems, conversationId) =>
         set((s) => ({
           items: [
             ...newItems.map((item) => ({
               ...item,
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
               createdAt: Date.now(),
+              conversationId,
             })),
             ...s.items,
           ],
@@ -37,6 +40,8 @@ export const useLearnings = create<LearningsState>()(
       removeItem: (id) =>
         set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
       clear: () => set({ items: [] }),
+      clearByConversation: (conversationId) =>
+        set((s) => ({ items: s.items.filter((i) => i.conversationId !== conversationId) })),
     }),
     {
       name: 'english-learnings',

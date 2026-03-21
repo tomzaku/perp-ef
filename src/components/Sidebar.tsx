@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useThemeContext } from '../hooks/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
+import { speakingQuestions } from '../data/englishSpeaking';
 
 interface SidebarProps {
   counts: Record<string, number>;
   completedCount: number;
   totalCount: number;
+  isVisible: (path: string) => boolean;
 }
 
-const navItems: { path: string; label: string; icon: string; desc: string }[] = [
+const navItems: { path: string; label: string; icon: string; desc: string; hideable?: boolean }[] = [
   { path: '/', label: 'Study Plan', icon: '>>', desc: '20-week structured roadmap' },
   { path: '/all', label: 'All Questions', icon: '{}', desc: 'Browse the full question bank' },
   { path: '/algorithm', label: 'Algorithm', icon: 'fn', desc: 'Data structures & algorithms (LeetCode-style)' },
@@ -22,9 +24,12 @@ const navItems: { path: string; label: string; icon: string; desc: string }[] = 
   { path: '/behavioral', label: 'Behavioral', icon: 'BQ', desc: 'STAR method, leadership & conflict stories' },
   { path: '/ai', label: 'AI', icon: 'AI', desc: 'Prompting, RAG, agents & LLM architecture' },
   { path: '/backend', label: 'Backend', icon: 'BE', desc: 'Databases, APIs, infra & server-side fundamentals' },
+  { path: '/english-speaking', label: 'English Speaking', icon: 'EN', desc: 'Practice questions with sample answers', hideable: true },
 ];
 
-export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
+export { navItems };
+
+export function Sidebar({ counts, completedCount, totalCount, isVisible }: SidebarProps) {
   const location = useLocation();
   const { theme, toggleTheme } = useThemeContext();
   const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
@@ -49,6 +54,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
   function getCount(path: string) {
     if (path === '/') return 20;
     if (path === '/all') return totalCount;
+    if (path === '/english-speaking') return speakingQuestions.length;
     const map: Record<string, string> = {
       '/algorithm': 'Algorithm',
       '/javascript': 'JavaScript',
@@ -123,7 +129,7 @@ export function Sidebar({ counts, completedCount, totalCount }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 py-3 px-3 overflow-y-auto">
         <div className="space-y-0.5">
-          {navItems.map((item) => {
+          {navItems.filter((item) => !item.hideable || isVisible(item.path)).map((item) => {
             const isActive =
               item.path === '/'
                 ? location.pathname === '/'

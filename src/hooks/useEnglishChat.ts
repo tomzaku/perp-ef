@@ -43,7 +43,14 @@ Rules for the block:
 - Include ALL applicable categories — omit any that don't apply
 - If there are no corrections or tips, output an empty array: ~~~learnings\\n[]\\n~~~
 - The block is hidden from the user — they only see the conversational text above it
-- Always include the block, even if the array is empty`;
+- Always include the block, even if the array is empty
+
+IMPORTANT — this is SPEAKING practice, not writing practice:
+- Do NOT correct capitalization, punctuation, or formatting — the user is speaking, not typing
+- Focus on grammar structure, word choice, natural phrasing, and pronunciation-related issues
+- Corrections should reflect how native speakers actually talk in casual conversation
+- "i went to the store" is perfectly fine in speech — do not flag missing capitalization
+- Contractions like "gonna", "wanna", "gotta" are natural in spoken English — don't correct them unless the context is formal`;
 
 function buildSystemPrompt(topicId: TopicId, mode: PracticeMode): string {
   const topicLabel = ENGLISH_TOPICS.find((t) => t.id === topicId)?.label || topicId;
@@ -62,6 +69,7 @@ Rules:
 - If the user seems stuck, offer hints or rephrase the question more simply
 - Be warm, patient, and encouraging — this is practice, not a test
 - Do NOT use bullet points or lists — keep it conversational like a real chat
+- Remember: this is SPEAKING practice — ignore capitalization and punctuation issues, focus on how things sound
 ${LEARNINGS_BLOCK_INSTRUCTION}`;
   }
 
@@ -83,6 +91,7 @@ Rules:
 - After the feedback, ask a follow-up question or a new question on the topic
 - Keep your conversational part concise — 2-3 sentences (feedback is separate)
 - Be warm and encouraging — frame corrections as "here's how to sound even more natural" not "you made a mistake"
+- Remember: this is SPEAKING practice — ignore capitalization and punctuation issues, focus on how things sound
 ${LEARNINGS_BLOCK_INSTRUCTION}`;
 }
 
@@ -131,9 +140,9 @@ export function useEnglishChat() {
   const topicRef = useRef<TopicId | null>(null);
   const modeRef = useRef<PracticeMode | null>(null);
   // Callback to pass extracted learnings back to the component
-  const onLearningsRef = useRef<((items: Omit<Learning, 'id' | 'createdAt'>[]) => void) | null>(null);
+  const onLearningsRef = useRef<((items: Omit<Learning, 'id' | 'createdAt'>[], conversationId?: string) => void) | null>(null);
 
-  const setOnLearnings = useCallback((fn: ((items: Omit<Learning, 'id' | 'createdAt'>[]) => void) | null) => {
+  const setOnLearnings = useCallback((fn: ((items: Omit<Learning, 'id' | 'createdAt'>[], conversationId?: string) => void) | null) => {
     onLearningsRef.current = fn;
   }, []);
 

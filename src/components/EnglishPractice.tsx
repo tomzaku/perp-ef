@@ -74,7 +74,8 @@ export function EnglishPractice() {
     conversations, saveConversation, updateConversation, deleteConversation,
   } = useEnglishConversations();
 
-  const { items: learnings, addItems: addLearnings, removeItem: removeLearning, clear: clearLearnings } = useLearnings();
+  const { items: allLearnings, addItems: addLearningsToStore, removeItem: removeLearning, clear: clearLearnings } = useLearnings();
+  const [showAllLearnings, setShowAllLearnings] = useState(false);
 
   // Preload TTS when drawer opens
   useEffect(() => {
@@ -113,10 +114,15 @@ export function EnglishPractice() {
 
   // Wire up learnings extraction callback — the hook calls this
   // whenever it strips a ~~~learnings block from an AI response
+  const activeConvIdRef = useRef<string | null>(null);
+  activeConvIdRef.current = activeConvId;
   useEffect(() => {
+    const addLearnings: typeof addLearningsToStore = (items) => {
+      addLearningsToStore(items, activeConvIdRef.current ?? undefined);
+    };
     setOnLearnings(addLearnings);
     return () => setOnLearnings(null);
-  }, [setOnLearnings, addLearnings]);
+  }, [setOnLearnings, addLearningsToStore]);
 
   // Auto-read new assistant messages
   useEffect(() => {
@@ -334,6 +340,10 @@ export function EnglishPractice() {
   const userMessageCount = messages.filter((m) => m.role === 'user').length;
   const inConversation = !!currentTopic;
 
+  const learnings = showAllLearnings || !activeConvId
+    ? allLearnings
+    : allLearnings.filter((l) => l.conversationId === activeConvId);
+
   const filteredLearnings = learningFilter === 'all'
     ? learnings
     : learnings.filter((l) => l.category === learningFilter);
@@ -446,16 +456,42 @@ export function EnglishPractice() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-base font-semibold text-text-primary">My Learnings</p>
-            <p className="text-sm text-text-muted">{learnings.length} items collected from your practice</p>
+            <p className="text-sm text-text-muted">{learnings.length} items{!showAllLearnings && activeConvId ? ' from this conversation' : ' from all conversations'}</p>
           </div>
-          {learnings.length > 0 && (
-            <button
-              onClick={clearLearnings}
-              className="text-xs text-text-muted hover:text-accent-red transition-colors cursor-pointer"
-            >
-              Clear all
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {activeConvId && (
+              <div className="flex rounded-full border border-border overflow-hidden">
+                <button
+                  onClick={() => setShowAllLearnings(false)}
+                  className={`text-xs px-2.5 py-1 transition-colors cursor-pointer ${
+                    !showAllLearnings
+                      ? 'bg-accent-purple/10 text-accent-purple'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  This conv
+                </button>
+                <button
+                  onClick={() => setShowAllLearnings(true)}
+                  className={`text-xs px-2.5 py-1 transition-colors cursor-pointer ${
+                    showAllLearnings
+                      ? 'bg-accent-purple/10 text-accent-purple'
+                      : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  All
+                </button>
+              </div>
+            )}
+            {learnings.length > 0 && (
+              <button
+                onClick={clearLearnings}
+                className="text-xs text-text-muted hover:text-accent-red transition-colors cursor-pointer"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Category filter pills */}
@@ -623,7 +659,7 @@ export function EnglishPractice() {
         </div>
 
         {/* Tabs — show when in conversation or have learnings */}
-        {(inConversation || learnings.length > 0) && (
+        {(inConversation || allLearnings.length > 0) && (
           <div className="flex border-b border-border shrink-0">
             <button
               onClick={() => setActiveTab('chat')}
@@ -644,7 +680,7 @@ export function EnglishPractice() {
               }`}
             >
               My Learnings
-              {learnings.length > 0 && (
+              {allLearnings.length > 0 && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                   activeTab === 'learnings' ? 'bg-accent-purple/20 text-accent-purple' : 'bg-bg-tertiary text-text-muted'
                 }`}>

@@ -15,6 +15,8 @@ import { PathList, PathDetail } from './components/LearningPathView';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
+import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
+import { useVisibleSections } from './hooks/useVisibleSections';
 
 function QuestionPage() {
   const { id } = useParams<{ id: string }>();
@@ -70,6 +72,7 @@ function App() {
     isCompleted,
     isBookmarked,
   } = useProgress();
+  const { isVisible } = useVisibleSections();
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -103,6 +106,7 @@ function App() {
         counts={categoryCounts}
         completedCount={completedCount}
         totalCount={allQuestions.length}
+        isVisible={isVisible}
       />
 
       <main ref={mainRef} className="flex-1 p-4 pt-16 lg:p-8 lg:pt-8 overflow-y-auto max-h-screen">
@@ -279,6 +283,9 @@ function App() {
               />
             }
           />
+
+          {/* English Speaking */}
+          <Route path="/english-speaking" element={<EnglishSpeakingPage />} />
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />
