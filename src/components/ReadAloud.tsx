@@ -11,8 +11,13 @@ export function ReadAloud({ text }: ReadAloudProps) {
 
   // Preload model when component first mounts
   useEffect(() => {
-    const id = requestIdleCallback(() => preloadKokoro(), { timeout: 3000 });
-    return () => cancelIdleCallback(id);
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(() => preloadKokoro(), { timeout: 3000 });
+      return () => cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(() => preloadKokoro(), 3000);
+      return () => clearTimeout(id);
+    }
   }, []);
 
   useEffect(() => {

@@ -8,14 +8,21 @@ interface AskChatGptProps {
 export function AskChatGpt({ title, description }: AskChatGptProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      const t = setTimeout(() => textareaRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  };
 
   const handleSubmit = () => {
     if (!query.trim()) return;
@@ -28,22 +35,28 @@ export function AskChatGpt({ title, description }: AskChatGptProps) {
   return (
     <div className="sticky -bottom-4 lg:-bottom-8 -mx-4 lg:-mx-8 mt-8 z-10">
       {open ? (
-        <div className="px-4 lg:px-8 py-3 bg-bg-primary/90 backdrop-blur-md border-t border-border animate-fade-in">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider shrink-0 hidden sm:block">
+        <div className="px-4 lg:px-8 py-3 bg-bg-primary/90 backdrop-blur-md border-t border-border animate-fade-in" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex items-end gap-3">
+            <span className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider shrink-0 hidden sm:block pb-2">
               Ask ChatGPT
             </span>
-            <input
-              ref={inputRef}
-              type="text"
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                autoResize();
+              }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSubmit();
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
                 if (e.key === 'Escape') setOpen(false);
               }}
               placeholder="Could you give me more example?"
-              className="flex-1 px-3 py-2 rounded-lg text-sm bg-bg-card border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/25 transition-colors"
+              className="flex-1 px-3 py-2 rounded-lg text-sm bg-bg-card border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/25 transition-colors resize-none"
             />
             <button
               onClick={handleSubmit}
@@ -63,7 +76,7 @@ export function AskChatGpt({ title, description }: AskChatGptProps) {
           </div>
         </div>
       ) : (
-        <div className="flex justify-end px-4 lg:px-8 pb-4 lg:pb-8">
+        <div className="flex justify-end px-4 lg:px-8 pb-4 lg:pb-8" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <button
             onClick={() => setOpen(true)}
             className="p-3 rounded-full shadow-lg backdrop-blur-md transition-all duration-300 cursor-pointer border bg-accent-green/10 text-accent-green border-accent-green/30 hover:bg-accent-green/20 hover:scale-105 animate-fade-in"
