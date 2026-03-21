@@ -25,6 +25,22 @@ export function FabMenu() {
       {/* Expanded options */}
       {expanded && (
         <div className="flex flex-col items-end gap-2 animate-fade-in">
+          {/* Recorder */}
+          <button
+            onClick={() => openPanel('recorder')}
+            className="flex items-center gap-2.5 pl-4 pr-3 py-2.5 rounded-full shadow-lg border border-accent-red/30 bg-bg-card hover:bg-accent-red/10 transition-all cursor-pointer group"
+          >
+            <span className="text-sm font-medium text-text-primary group-hover:text-accent-red transition-colors whitespace-nowrap">
+              Record
+            </span>
+            <span className="w-9 h-9 rounded-full bg-accent-red/15 text-accent-red flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+          </button>
+
           {/* English Practice */}
           <button
             onClick={() => openPanel('englishPractice')}

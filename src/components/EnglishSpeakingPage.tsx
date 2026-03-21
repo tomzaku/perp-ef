@@ -1,10 +1,147 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { speakingQuestions, speakingTopics } from '../data/englishSpeaking';
 import { ReadAloud } from './ReadAloud';
+import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
+
+/** Check if there is still a text selection in the document */
+function hasSelection() {
+  const sel = window.getSelection();
+  return sel && sel.toString().trim().length >= 2;
+}
+
+/** Floating popup that appears on text selection to read it aloud */
+function SelectionSpeaker({ containerRef }: { containerRef: React.RefObject<HTMLElement | null> }) {
+  const [popup, setPopup] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [state, setState] = useState<'idle' | 'done' | 'loading' | 'playing'>('idle');
+  const mountedRef = useRef(true);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleMouseUp = () => {
+      requestAnimationFrame(() => {
+        const sel = window.getSelection();
+        const text = sel?.toString().trim();
+        if (!text || text.length < 2) {
+          if (state !== 'loading' && state !== 'playing') setPopup(null);
+          return;
+        }
+
+        const range = sel!.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        setState('idle');
+        setPopup({
+          x: rect.left + rect.width / 2 - containerRect.left,
+          y: rect.top - containerRect.top - 8,
+          text,
+        });
+      });
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (popupRef.current?.contains(e.target as Node)) return;
+      if (state !== 'loading' && state !== 'playing') {
+        setPopup(null);
+        setState('idle');
+      }
+    };
+
+    container.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      container.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [containerRef, state]);
+
+  const play = useCallback(async () => {
+    if (!popup) return;
+    stopKokoroAudio();
+    setState('loading');
+    try {
+      await speakWithKokoro(popup.text, {
+        onStart: () => { if (mountedRef.current) setState('playing'); },
+        onEnd: () => {
+          if (mountedRef.current) setState(hasSelection() ? 'done' : 'idle');
+        },
+      });
+    } catch {
+      if (mountedRef.current) setState(hasSelection() ? 'done' : 'idle');
+    }
+  }, [popup]);
+
+  const stop = useCallback(() => {
+    stopKokoroAudio();
+    setState(hasSelection() ? 'done' : 'idle');
+  }, []);
+
+  if (!popup) return null;
+
+  const isActive = state === 'loading' || state === 'playing';
+  const isDone = state === 'done';
+
+  return (
+    <div
+      ref={popupRef}
+      className="absolute z-50 flex items-center rounded-lg shadow-lg border bg-bg-card border-border -translate-x-1/2 -translate-y-full"
+      style={{ left: popup.x, top: popup.y }}
+    >
+      {/* Listen / Stop button */}
+      <button
+        onClick={isActive ? stop : play}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-all cursor-pointer ${
+          isActive ? 'text-accent-cyan' : isDone ? 'text-accent-green hover:text-accent-cyan' : 'text-text-secondary hover:text-accent-cyan'
+        } ${isActive || isDone ? 'rounded-l-lg' : 'rounded-lg'}`}
+      >
+        {state === 'loading' ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" className="animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 2a10 10 0 0 1 10 10" />
+          </svg>
+        ) : state === 'playing' ? (
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <rect x="0" y="0" width="10" height="10" rx="1" />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          </svg>
+        )}
+        <span className="text-xs font-medium">
+          {state === 'playing' ? 'Stop' : state === 'loading' ? 'Loading...' : 'Listen'}
+        </span>
+      </button>
+
+      {/* Repeat button — visible while playing or after done */}
+      {(isActive || isDone) && (
+        <button
+          onClick={play}
+          className="flex items-center gap-1 px-2 py-1.5 rounded-r-lg border-l border-border text-text-muted hover:text-accent-green transition-all cursor-pointer"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+          </svg>
+          <span className="text-[11px] font-medium">Repeat</span>
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function EnglishSpeakingPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(
     () =>
@@ -23,12 +160,14 @@ export function EnglishSpeakingPage() {
   }, []);
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto relative" ref={contentRef}>
+      <SelectionSpeaker containerRef={contentRef} />
+
       <h1 className="text-2xl font-display font-bold text-text-primary mb-1">
         English Speaking Practice
       </h1>
       <p className="text-sm text-text-muted mb-6">
-        Common conversation questions with sample answers. Read them aloud and practice speaking naturally.
+        Common conversation questions with sample answers. Select any text to listen to it.
       </p>
 
       {/* Topic filter */}

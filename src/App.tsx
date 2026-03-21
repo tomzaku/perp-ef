@@ -15,6 +15,7 @@ import { PathList, PathDetail } from './components/LearningPathView';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
+import { Recorder } from './components/Recorder';
 import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
 import { useVisibleSections } from './hooks/useVisibleSections';
 
@@ -298,6 +299,7 @@ function App() {
       {/* FAB menu + English Practice drawer */}
       <FabMenu />
       <EnglishPractice />
+      <Recorder />
     </div>
     </ThemeContext>
     </AuthProvider>

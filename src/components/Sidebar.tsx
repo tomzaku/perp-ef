@@ -305,7 +305,7 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 min-h-screen bg-bg-secondary border-r border-border flex-col shrink-0">
+      <aside className="hidden lg:flex w-64 h-screen sticky top-0 bg-bg-secondary border-r border-border flex-col shrink-0 overflow-hidden">
         {sidebarContent}
       </aside>
     </>

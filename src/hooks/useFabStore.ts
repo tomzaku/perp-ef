@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type FabPanel = 'none' | 'askChatGpt' | 'englishPractice';
+type FabPanel = 'none' | 'askChatGpt' | 'englishPractice' | 'recorder';
 
 interface FabState {
   expanded: boolean;
