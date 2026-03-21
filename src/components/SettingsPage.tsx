@@ -1,8 +1,10 @@
-import { useTtsSettings, KOKORO_VOICES, type TtsEngine } from '../hooks/useTtsSettings';
+import { useTtsSettings, KOKORO_VOICES, PIPER_VOICES, type TtsEngine } from '../hooks/useTtsSettings';
 import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
 import { useState } from 'react';
 
-const engines: { id: TtsEngine; label: string; desc: string; badge?: string }[] = [
+const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
+
+const engines: { id: TtsEngine; label: string; desc: string; badge?: string; hidden?: boolean }[] = [
   {
     id: 'native',
     label: 'Browser Native',
@@ -10,10 +12,18 @@ const engines: { id: TtsEngine; label: string; desc: string; badge?: string }[] 
     badge: 'Fast',
   },
   {
+    id: 'piper',
+    label: 'Piper AI',
+    desc: 'Neural TTS running locally via WASM. Good voice quality, works on all browsers including Safari.',
+    badge: 'Safari-friendly',
+  },
+  {
     id: 'kokoro',
     label: 'Kokoro AI',
-    desc: 'High-quality neural TTS (82M params) running locally via WebGPU/WASM. ~160MB download on first use.',
-    badge: 'Better voice',
+    desc: isSafari
+      ? 'High-quality neural TTS (82M params). Not available on Safari — use Piper AI instead.'
+      : 'High-quality neural TTS (82M params) running locally via WebGPU/WASM. ~160MB download on first use.',
+    badge: isSafari ? 'Unavailable' : 'Best voice',
   },
 ];
 
@@ -32,7 +42,7 @@ const gradeColor: Record<string, string> = {
 };
 
 export function SettingsPage() {
-  const { engine, setEngine, voice, setVoice, speed, setSpeed } = useTtsSettings();
+  const { engine, setEngine, voice, setVoice, piperVoice, setPiperVoice, speed, setSpeed } = useTtsSettings();
   const [previewState, setPreviewState] = useState<{ id: string; phase: 'loading' | 'playing' } | null>(null);
 
   const preview = async (voiceId: string) => {
@@ -54,14 +64,6 @@ export function SettingsPage() {
     setPreviewState(null);
   };
 
-  // Group voices by accent + gender
-  const groups = [
-    { label: 'American Female', voices: KOKORO_VOICES.filter((v) => v.accent === 'American' && v.gender === 'Female') },
-    { label: 'American Male', voices: KOKORO_VOICES.filter((v) => v.accent === 'American' && v.gender === 'Male') },
-    { label: 'British Female', voices: KOKORO_VOICES.filter((v) => v.accent === 'British' && v.gender === 'Female') },
-    { label: 'British Male', voices: KOKORO_VOICES.filter((v) => v.accent === 'British' && v.gender === 'Male') },
-  ];
-
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-display font-bold text-text-primary mb-1">Settings</h1>
@@ -74,14 +76,19 @@ export function SettingsPage() {
         </h2>
 
         <div className="space-y-3">
-          {engines.map((e) => (
+          {engines.map((e) => {
+            const disabled = e.id === 'kokoro' && isSafari;
+            return (
             <button
               key={e.id}
-              onClick={() => setEngine(e.id)}
-              className={`w-full text-left p-4 rounded-lg border transition-all cursor-pointer ${
-                engine === e.id
-                  ? 'bg-accent-cyan/5 border-accent-cyan/30 ring-1 ring-accent-cyan/20'
-                  : 'bg-bg-card border-border hover:border-text-muted/30'
+              onClick={() => !disabled && setEngine(e.id)}
+              disabled={disabled}
+              className={`w-full text-left p-4 rounded-lg border transition-all ${
+                disabled
+                  ? 'opacity-40 cursor-not-allowed bg-bg-card border-border'
+                  : engine === e.id
+                    ? 'bg-accent-cyan/5 border-accent-cyan/30 ring-1 ring-accent-cyan/20 cursor-pointer'
+                    : 'bg-bg-card border-border hover:border-text-muted/30 cursor-pointer'
               }`}
             >
               <div className="flex items-center gap-3 mb-1">
@@ -105,7 +112,8 @@ export function SettingsPage() {
               </div>
               <p className="text-xs text-text-muted ml-7">{e.desc}</p>
             </button>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -132,23 +140,35 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Voice Picker — only shown when Kokoro is selected */}
-      {engine === 'kokoro' && (
+      {/* Voice Picker — shown when Kokoro or Piper is selected */}
+      {(engine === 'kokoro' || engine === 'piper') && (() => {
+        const isKokoro = engine === 'kokoro';
+        const voices = isKokoro ? KOKORO_VOICES : PIPER_VOICES;
+        const currentVoice = isKokoro ? voice : piperVoice;
+        const setCurrentVoice = isKokoro ? setVoice : setPiperVoice;
+        const voiceGroups = [
+          { label: 'American Female', voices: voices.filter((v) => v.accent === 'American' && v.gender === 'Female') },
+          { label: 'American Male', voices: voices.filter((v) => v.accent === 'American' && v.gender === 'Male') },
+          { label: 'British Female', voices: voices.filter((v) => v.accent === 'British' && v.gender === 'Female') },
+          { label: 'British Male', voices: voices.filter((v) => v.accent === 'British' && v.gender === 'Male') },
+        ].filter((g) => g.voices.length > 0);
+
+        return (
         <section>
           <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
             Voice
           </h2>
           <p className="text-xs text-text-muted mb-4">
-            Pick a voice for Kokoro AI. Click the play button to preview.
+            Pick a voice for {isKokoro ? 'Kokoro' : 'Piper'} AI. Click the play button to preview.
           </p>
 
           <div className="space-y-5">
-            {groups.map((group) => (
+            {voiceGroups.map((group) => (
               <div key={group.label}>
                 <h3 className="text-xs font-medium text-text-muted mb-2">{group.label}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {group.voices.map((v) => {
-                    const selected = voice === v.id;
+                    const selected = currentVoice === v.id;
                     const isLoading = previewState?.id === v.id && previewState.phase === 'loading';
                     const isPlaying = previewState?.id === v.id && previewState.phase === 'playing';
 
@@ -160,7 +180,7 @@ export function SettingsPage() {
                             ? 'bg-accent-cyan/5 border-accent-cyan/30'
                             : 'bg-bg-card border-border hover:border-text-muted/30'
                         }`}
-                        onClick={() => setVoice(v.id)}
+                        onClick={() => setCurrentVoice(v.id)}
                       >
                         {/* Radio */}
                         <span
@@ -218,7 +238,8 @@ export function SettingsPage() {
             ))}
           </div>
         </section>
-      )}
+        );
+      })()}
     </div>
   );
 }

@@ -107,3 +107,17 @@ code, pre {
 .stagger > *:nth-child(9) { animation-delay: 0.18s; }
 .stagger > *:nth-child(10) { animation-delay: 0.2s; }
 .stagger > *:nth-child(n+11) { animation-delay: 0.22s; }
+
+/* English Practice — large text mode when maximized */
+.eng-text-lg p,
+.eng-text-lg li {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+}
+.eng-text-lg ul,
+.eng-text-lg ol {
+  font-size: 1.5rem !important;
+}
+.eng-text-lg h1 { font-size: 2rem !important; }
+.eng-text-lg h2 { font-size: 1.75rem !important; }
+.eng-text-lg h3 { font-size: 1.5rem !important; }

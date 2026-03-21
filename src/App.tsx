@@ -13,6 +13,8 @@ import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
 import { PathList, PathDetail } from './components/LearningPathView';
 import { SettingsPage } from './components/SettingsPage';
+import { FabMenu } from './components/FabMenu';
+import { EnglishPractice } from './components/EnglishPractice';
 
 function QuestionPage() {
   const { id } = useParams<{ id: string }>();
@@ -285,6 +287,10 @@ function App() {
           <Route path="/question/:id" element={<QuestionPage />} />
         </Routes>
       </main>
+
+      {/* FAB menu + English Practice drawer */}
+      <FabMenu />
+      <EnglishPractice />
     </div>
     </ThemeContext>
     </AuthProvider>

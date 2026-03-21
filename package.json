@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
+    "@mintplex-labs/piper-tts-web": "^1.0.4",
     "@monaco-editor/react": "^4.7.0",
     "@supabase/supabase-js": "^2.99.1",
     "kokoro-js": "^1.2.1",
     "mermaid": "^11.12.3",
+    "onnxruntime-web": "1.18.0",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

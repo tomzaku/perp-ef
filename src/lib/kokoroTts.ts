@@ -1,8 +1,13 @@
 import { cleanMarkdown } from './cleanMarkdown';
-import { getTtsEngine, getTtsVoice, getTtsSpeed } from '../hooks/useTtsSettings';
+import { getTtsEngine, getTtsVoice, getTtsSpeed, getPiperVoice, PIPER_VOICES } from '../hooks/useTtsSettings';
 
 type KokoroTTSInstance = {
-  generate(text: string, options: { voice: string; speed: number }): Promise<{ toBlob(): Blob }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  generate(text: string, options: { voice: any; speed: number }): Promise<{ toBlob(): Blob }>;
+};
+
+type PiperTTSModule = {
+  predict(config: { text: string; voiceId: string }): Promise<Blob>;
 };
 
 const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
@@ -68,26 +73,102 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
         }
       },
     });
-    ttsInstance = tts;
+    ttsInstance = tts as unknown as KokoroTTSInstance;
     log('model ready');
-    return tts;
+    return ttsInstance;
   }).catch((err) => {
     ttsPromise = null;
     kokoroUnavailable = true;
     throw err;
   });
 
-  return ttsPromise;
+  return ttsPromise!;
 }
 
 export function preloadKokoro() {
-  if (getTtsEngine() !== 'kokoro') return;
+  const engine = getTtsEngine();
+  if (engine === 'piper') {
+    preloadPiper();
+    return;
+  }
+  if (engine !== 'kokoro') return;
   if (kokoroUnavailable) return;
   sessionStart = performance.now();
   log('preloading model...');
   getKokoroTTS().catch((err) => {
     console.warn(TAG, 'preload failed (will fall back to native TTS):', err);
   });
+}
+
+// ─── Piper TTS (Safari-compatible) ─────────────────────────────────
+
+let piperModule: PiperTTSModule | null = null;
+let piperPromise: Promise<PiperTTSModule> | null = null;
+
+async function getPiperTTS(): Promise<PiperTTSModule> {
+  if (piperModule) return piperModule;
+  if (piperPromise) return piperPromise;
+
+  log('loading Piper TTS module...');
+  piperPromise = import('@mintplex-labs/piper-tts-web').then((mod) => {
+    piperModule = mod as unknown as PiperTTSModule;
+    log('Piper TTS module ready');
+    return piperModule;
+  }).catch((err) => {
+    piperPromise = null;
+    throw err;
+  });
+
+  return piperPromise;
+}
+
+export function preloadPiper() {
+  if (getTtsEngine() !== 'piper') return;
+  sessionStart = performance.now();
+  log('preloading Piper TTS...');
+  getPiperTTS().catch((err) => {
+    console.warn(TAG, 'Piper preload failed:', err);
+  });
+}
+
+async function speakPiper(
+  text: string,
+  options?: { voice?: string; onStart?: () => void; onEnd?: () => void },
+): Promise<void> {
+  const piper = await getPiperTTS();
+  if (cancelled) return;
+
+  const chunks = splitIntoChunks(text);
+  log(`piper: split into ${chunks.length} chunks`);
+
+  const rawVoice = options?.voice ?? getPiperVoice();
+  // Validate voice ID exists in Piper's voice list (Kokoro voice IDs are not compatible)
+  const voiceId = PIPER_VOICES.some((v) => v.id === rawVoice) ? rawVoice : getPiperVoice();
+
+  // Generate first chunk
+  log(`piper chunk 0: generating...`);
+  let nextBlob: Blob | null = await piper.predict({ text: chunks[0], voiceId });
+  if (!nextBlob || cancelled) { options?.onEnd?.(); return; }
+
+  options?.onStart?.();
+
+  for (let i = 0; i < chunks.length; i++) {
+    if (cancelled) { log('cancelled'); break; }
+
+    const currentBlob = nextBlob!;
+
+    // Pre-generate next chunk in parallel with playback
+    const nextPromise = (i + 1 < chunks.length)
+      ? piper.predict({ text: chunks[i + 1], voiceId }).catch(() => null)
+      : Promise.resolve(null);
+
+    log(`piper chunk ${i}: playing...`);
+    await playBlob(currentBlob);
+    log(`piper chunk ${i}: done`);
+
+    nextBlob = await nextPromise;
+    if (!nextBlob && i + 1 < chunks.length) break;
+  }
 }
 
 // ─── Native browser TTS ────────────────────────────────────────────
@@ -215,13 +296,27 @@ export async function speakWithKokoro(
   const engine = getTtsEngine();
   log(`speak requested (engine=${engine}), text length: ${clean.length}`);
 
-  if (engine === 'native' || kokoroUnavailable) {
-    if (kokoroUnavailable && engine !== 'native') {
-      log('kokoro unavailable on this browser, falling back to native TTS');
-    }
+  if (engine === 'native') {
     options?.onStart?.();
     await speakNative(clean, options);
     log('done');
+    return;
+  }
+
+  if (engine === 'piper' || (kokoroUnavailable && engine === 'kokoro')) {
+    if (kokoroUnavailable && engine === 'kokoro') {
+      log('kokoro unavailable on this browser, falling back to Piper TTS');
+    }
+    try {
+      await speakPiper(clean, options);
+      log('done');
+      options?.onEnd?.();
+    } catch (err) {
+      console.warn(TAG, 'Piper failed, falling back to native TTS:', err);
+      options?.onStart?.();
+      await speakNative(clean, options);
+      log('done');
+    }
     return;
   }
 
