@@ -1,6 +1,9 @@
-import { KokoroTTS } from 'kokoro-js';
 import { cleanMarkdown } from './cleanMarkdown';
 import { getTtsEngine, getTtsVoice, getTtsSpeed } from '../hooks/useTtsSettings';
+
+type KokoroTTSInstance = {
+  generate(text: string, options: { voice: string; speed: number }): Promise<{ toBlob(): Blob }>;
+};
 
 const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 const TAG = '[tts]';
@@ -15,8 +18,14 @@ function log(...args: unknown[]) {
 
 // ─── Kokoro (AI model) ─────────────────────────────────────────────
 
-let ttsInstance: KokoroTTS | null = null;
-let ttsPromise: Promise<KokoroTTS> | null = null;
+function isSafari(): boolean {
+  const ua = navigator.userAgent;
+  return /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+}
+
+let kokoroUnavailable = isSafari();
+let ttsInstance: KokoroTTSInstance | null = null;
+let ttsPromise: Promise<KokoroTTSInstance> | null = null;
 
 async function hasWebGPU(): Promise<boolean> {
   try {
@@ -29,7 +38,7 @@ async function hasWebGPU(): Promise<boolean> {
   }
 }
 
-export async function getKokoroTTS(): Promise<KokoroTTS> {
+export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
   if (ttsInstance) {
     log('model already loaded (cached)');
     return ttsInstance;
@@ -45,22 +54,27 @@ export async function getKokoroTTS(): Promise<KokoroTTS> {
 
   log(`starting model download... device=${device} dtype=${dtype}`);
 
-  ttsPromise = KokoroTTS.from_pretrained(MODEL_ID, {
-    dtype,
-    device,
-    progress_callback: (p: { progress?: number; status?: string; file?: string }) => {
-      if (p.status === 'initiate') {
-        log(`⬇ downloading: ${p.file}`);
-      } else if (p.status === 'done') {
-        log(`✓ done: ${p.file}`);
-      } else if (typeof p.progress === 'number' && p.progress > 0 && p.progress % 10 < 1) {
-        log(`⬇ ${p.file} — ${p.progress.toFixed(0)}%`);
-      }
-    },
-  }).then((tts) => {
+  ttsPromise = import('kokoro-js').then(async ({ KokoroTTS }) => {
+    const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
+      dtype,
+      device,
+      progress_callback: (p: { progress?: number; status?: string; file?: string }) => {
+        if (p.status === 'initiate') {
+          log(`⬇ downloading: ${p.file}`);
+        } else if (p.status === 'done') {
+          log(`✓ done: ${p.file}`);
+        } else if (typeof p.progress === 'number' && p.progress > 0 && p.progress % 10 < 1) {
+          log(`⬇ ${p.file} — ${p.progress.toFixed(0)}%`);
+        }
+      },
+    });
     ttsInstance = tts;
     log('model ready');
     return tts;
+  }).catch((err) => {
+    ttsPromise = null;
+    kokoroUnavailable = true;
+    throw err;
   });
 
   return ttsPromise;
@@ -68,10 +82,11 @@ export async function getKokoroTTS(): Promise<KokoroTTS> {
 
 export function preloadKokoro() {
   if (getTtsEngine() !== 'kokoro') return;
+  if (kokoroUnavailable) return;
   sessionStart = performance.now();
   log('preloading model...');
   getKokoroTTS().catch((err) => {
-    console.error(TAG, 'preload failed:', err);
+    console.warn(TAG, 'preload failed (will fall back to native TTS):', err);
   });
 }
 
@@ -200,7 +215,10 @@ export async function speakWithKokoro(
   const engine = getTtsEngine();
   log(`speak requested (engine=${engine}), text length: ${clean.length}`);
 
-  if (engine === 'native') {
+  if (engine === 'native' || kokoroUnavailable) {
+    if (kokoroUnavailable && engine !== 'native') {
+      log('kokoro unavailable on this browser, falling back to native TTS');
+    }
     options?.onStart?.();
     await speakNative(clean, options);
     log('done');
@@ -208,7 +226,16 @@ export async function speakWithKokoro(
   }
 
   // Kokoro engine — split into chunks, pre-generate next while current plays
-  const tts = await getKokoroTTS();
+  let tts: KokoroTTSInstance;
+  try {
+    tts = await getKokoroTTS();
+  } catch {
+    log('kokoro failed to load, falling back to native TTS');
+    options?.onStart?.();
+    await speakNative(clean, options);
+    log('done');
+    return;
+  }
   if (cancelled) return;
 
   const chunks = splitIntoChunks(clean);
