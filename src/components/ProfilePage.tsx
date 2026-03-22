@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProgressStore } from '../hooks/useProgress';
-import { useTags } from '../hooks/useTags';
+import { useTags, DEFAULT_TAGS } from '../hooks/useTags';
 import { allQuestions } from '../data';
 import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
@@ -180,19 +180,21 @@ export function ProfilePage() {
                 >
                   <span>{name}</span>
                   <span className="opacity-60">{count}</span>
-                  <button
-                    onClick={() => handleDeleteTag(name)}
-                    className="ml-0.5 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity cursor-pointer"
-                    title={confirmDelete === name ? 'Click again to confirm' : 'Delete tag'}
-                  >
-                    {confirmDelete === name ? (
-                      <span className="text-[10px]">confirm?</span>
-                    ) : (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    )}
-                  </button>
+                  {!DEFAULT_TAGS.includes(name) && (
+                    <button
+                      onClick={() => handleDeleteTag(name)}
+                      className="ml-0.5 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity cursor-pointer"
+                      title={confirmDelete === name ? 'Click again to confirm' : 'Delete tag'}
+                    >
+                      {confirmDelete === name ? (
+                        <span className="text-[10px]">confirm?</span>
+                      ) : (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </div>
               );
             })}

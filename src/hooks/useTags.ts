@@ -5,7 +5,8 @@ import { syncRemote } from '../lib/persist';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
-const DEFAULT_TAGS = ['failed', 'success', '15 mins', '30 mins', '1 hour', 'must try again'];
+export const DEFAULT_TAGS = ['failed', 'success', '15 mins', '30 mins', '1 hour', 'must try again'];
+const DEFAULT_TAG_SET = new Set(DEFAULT_TAGS);
 
 interface TagsState {
   tagNames: string[];
@@ -49,6 +50,7 @@ export const useTagsStore = create<TagsState>()(
       },
 
       deleteTag: (name: string, userId?: string) => {
+        if (DEFAULT_TAG_SET.has(name)) return;
         const { tagNames, questionTags } = get();
         const next: Record<string, string[]> = {};
         for (const [qid, tags] of Object.entries(questionTags)) {
@@ -67,6 +69,7 @@ export const useTagsStore = create<TagsState>()(
       },
 
       renameTag: (oldName: string, newName: string, userId?: string) => {
+        if (DEFAULT_TAG_SET.has(oldName)) return;
         const trimmed = newName.trim();
         if (!trimmed || oldName === trimmed) return;
         const { tagNames, questionTags } = get();
@@ -214,6 +217,15 @@ export const useTagsStore = create<TagsState>()(
         tagNames: state.tagNames,
         questionTags: state.questionTags,
       }),
+      merge: (persisted, current) => {
+        const state = { ...current, ...(persisted as Partial<TagsState>) };
+        // Ensure default tags are always present
+        const names = new Set(state.tagNames);
+        for (const tag of DEFAULT_TAGS) {
+          if (!names.has(tag)) state.tagNames = [...state.tagNames, tag];
+        }
+        return state;
+      },
     },
   ),
 );
