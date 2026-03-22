@@ -21,14 +21,14 @@ function formatTime(totalSeconds: number) {
 }
 
 export function Timer() {
-  const { panel, closePanel } = useFabStore();
-  const open = panel === 'timer';
+  const { timerOpen: open, toggleTimer } = useFabStore();
 
   const [mode, setMode] = useState<Mode>('idle');
-  const [totalSeconds, setTotalSeconds] = useState(30 * 60); // default 30 min
+  const [totalSeconds, setTotalSeconds] = useState(30 * 60);
   const [remaining, setRemaining] = useState(30 * 60);
   const [isCountUp, setIsCountUp] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [minimized, setMinimized] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
 
@@ -76,6 +76,7 @@ export function Timer() {
     clearTimer();
     const duration = seconds ?? totalSeconds;
     setTotalSeconds(duration);
+    setMinimized(true);
     if (isCountUp) {
       setElapsed(0);
       setMode('running');
@@ -143,9 +144,43 @@ export function Timer() {
   const displayTime = isCountUp ? elapsed : remaining;
   const progress = isCountUp ? 0 : totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
   const isLow = !isCountUp && mode === 'running' && remaining <= 60 && remaining > 0;
+  const isActive = mode !== 'idle';
+
+  // Minimized pill
+  if (minimized) {
+    return (
+      <button
+        onClick={() => setMinimized(false)}
+        className={`fixed bottom-20 right-6 z-20 flex items-center gap-2 px-3.5 py-2 rounded-full shadow-2xl border transition-all cursor-pointer ${
+          mode === 'done'
+            ? 'bg-accent-red/15 border-accent-red/30 text-accent-red animate-pulse'
+            : isLow
+              ? 'bg-accent-orange/15 border-accent-orange/30 text-accent-orange'
+              : 'bg-bg-primary border-border hover:border-accent-yellow/30'
+        }`}
+        title="Expand timer"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={mode === 'done' ? 'currentColor' : isLow ? 'currentColor' : 'var(--color-accent-yellow)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        <span className={`text-sm font-code font-bold tabular-nums ${
+          mode === 'done' ? 'text-accent-red' : isLow ? 'text-accent-orange' : 'text-text-primary'
+        }`}>
+          {formatTime(displayTime)}
+        </span>
+        {mode === 'running' && (
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+        )}
+        {mode === 'paused' && (
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-yellow" />
+        )}
+      </button>
+    );
+  }
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 w-72 bg-bg-primary border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+    <div className="fixed bottom-20 right-6 z-20 w-72 bg-bg-primary border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-bg-card/50">
         <div className="flex items-center gap-2">
@@ -170,8 +205,20 @@ export function Timer() {
               {isCountUp ? 'Stopwatch' : 'Countdown'}
             </button>
           )}
+          {/* Minimize (only when active) */}
+          {isActive && (
+            <button
+              onClick={() => setMinimized(true)}
+              className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+              title="Minimize"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          )}
           <button
-            onClick={closePanel}
+            onClick={toggleTimer}
             className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text-primary transition-colors cursor-pointer"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

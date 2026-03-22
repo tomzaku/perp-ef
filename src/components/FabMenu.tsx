@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useFabStore } from '../hooks/useFabStore';
 
 export function FabMenu() {
-  const { expanded, panel, chatGptContext, toggleExpanded, collapse, openPanel } = useFabStore();
+  const { expanded, panel, chatGptContext, toggleExpanded, collapse, openPanel, toggleTimer } = useFabStore();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -17,8 +17,8 @@ export function FabMenu() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [expanded, collapse]);
 
-  // Hide FAB when a panel is open (except timer which is a small overlay)
-  if (panel !== 'none' && panel !== 'timer') return null;
+  // Hide FAB when a panel is open
+  if (panel !== 'none') return null;
 
   return (
     <div ref={menuRef} className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2">
@@ -27,7 +27,7 @@ export function FabMenu() {
         <div className="flex flex-col items-end gap-2 animate-fade-in">
           {/* Timer */}
           <button
-            onClick={() => openPanel('timer')}
+            onClick={toggleTimer}
             className="flex items-center gap-2.5 pl-4 pr-3 py-2.5 rounded-full shadow-lg border border-accent-yellow/30 bg-bg-card hover:bg-accent-yellow/10 transition-all cursor-pointer group"
           >
             <span className="text-sm font-medium text-text-primary group-hover:text-accent-yellow transition-colors whitespace-nowrap">
