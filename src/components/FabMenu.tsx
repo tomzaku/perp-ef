@@ -17,14 +17,30 @@ export function FabMenu() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [expanded, collapse]);
 
-  // Hide FAB when a panel is open
-  if (panel !== 'none') return null;
+  // Hide FAB when a panel is open (except timer which is a small overlay)
+  if (panel !== 'none' && panel !== 'timer') return null;
 
   return (
     <div ref={menuRef} className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2">
       {/* Expanded options */}
       {expanded && (
         <div className="flex flex-col items-end gap-2 animate-fade-in">
+          {/* Timer */}
+          <button
+            onClick={() => openPanel('timer')}
+            className="flex items-center gap-2.5 pl-4 pr-3 py-2.5 rounded-full shadow-lg border border-accent-yellow/30 bg-bg-card hover:bg-accent-yellow/10 transition-all cursor-pointer group"
+          >
+            <span className="text-sm font-medium text-text-primary group-hover:text-accent-yellow transition-colors whitespace-nowrap">
+              Timer
+            </span>
+            <span className="w-9 h-9 rounded-full bg-accent-yellow/15 text-accent-yellow flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </span>
+          </button>
+
           {/* Recorder */}
           <button
             onClick={() => openPanel('recorder')}

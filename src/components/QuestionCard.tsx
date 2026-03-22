@@ -4,6 +4,7 @@ import { DifficultyBadge } from './DifficultyBadge';
 import { CompanyTag } from './CompanyTag';
 import { useAuth } from '../hooks/useAuth';
 import { useTagsStore } from '../hooks/useTags';
+import { useShallow } from 'zustand/react/shallow';
 
 interface QuestionCardProps {
   question: Question;
@@ -22,7 +23,7 @@ export function QuestionCard({
 }: QuestionCardProps) {
   const navigate = useNavigate();
   const { user, signInWithGoogle } = useAuth();
-  const questionTags = useTagsStore((s) => s.questionTags[question.id] || []);
+  const questionTags = useTagsStore(useShallow((s) => s.questionTags[question.id] ?? []));
 
   const handleProtectedAction = (action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();

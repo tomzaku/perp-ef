@@ -16,6 +16,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
 import { Recorder } from './components/Recorder';
+import { Timer } from './components/Timer';
 import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
 import { ProfilePage } from './components/ProfilePage';
 import { useVisibleSections } from './hooks/useVisibleSections';
@@ -304,6 +305,7 @@ function App() {
       <FabMenu />
       <EnglishPractice />
       <Recorder />
+      <Timer />
     </div>
     </ThemeContext>
     </AuthProvider>
