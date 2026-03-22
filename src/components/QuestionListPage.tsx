@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import type { Question, Difficulty, Category } from '../types/question';
 import { SearchBar } from './SearchBar';
 import { QuestionCard } from './QuestionCard';
-import { useLabels } from '../hooks/useLabels';
+import { useTags } from '../hooks/useTags';
 
 interface QuestionListPageProps {
   title: string;
@@ -28,8 +28,8 @@ export function QuestionListPage({
   const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All');
   const [company, setCompany] = useState('All');
   const [subcategory, setSubcategory] = useState('All');
-  const [labelFilter, setLabelFilter] = useState('All');
-  const { labelNames, questionLabels } = useLabels();
+  const [tagFilter, setTagFilter] = useState('All');
+  const { tagNames, questionTags } = useTags();
 
   const filteredQuestions = useMemo(() => {
     let qs = questions;
@@ -47,10 +47,10 @@ export function QuestionListPage({
     if (difficulty !== 'All') qs = qs.filter((q) => q.difficulty === difficulty);
     if (company !== 'All') qs = qs.filter((q) => q.companies.includes(company));
     if (subcategory !== 'All') qs = qs.filter((q) => q.subcategory === subcategory);
-    if (labelFilter !== 'All') qs = qs.filter((q) => (questionLabels[q.id] || []).includes(labelFilter));
+    if (tagFilter !== 'All') qs = qs.filter((q) => (questionTags[q.id] || []).includes(tagFilter));
 
     return qs;
-  }, [questions, search, difficulty, company, subcategory, labelFilter, questionLabels]);
+  }, [questions, search, difficulty, company, subcategory, tagFilter, questionTags]);
 
   const allCompanies = useMemo(() => {
     const set = new Set<string>();
@@ -89,24 +89,24 @@ export function QuestionListPage({
         subcategories={allSubcategories}
       />
 
-      {labelNames.length > 0 && (
+      {tagNames.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           <button
-            onClick={() => setLabelFilter('All')}
+            onClick={() => setTagFilter('All')}
             className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer border ${
-              labelFilter === 'All'
+              tagFilter === 'All'
                 ? 'bg-text-primary/10 text-text-primary border-text-primary/20'
                 : 'bg-bg-tertiary text-text-muted border-transparent hover:text-text-secondary'
             }`}
           >
-            All labels
+            All tags
           </button>
-          {labelNames.map((name) => (
+          {tagNames.map((name) => (
             <button
               key={name}
-              onClick={() => setLabelFilter(labelFilter === name ? 'All' : name)}
+              onClick={() => setTagFilter(tagFilter === name ? 'All' : name)}
               className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer border ${
-                labelFilter === name
+                tagFilter === name
                   ? 'bg-accent-purple/10 text-accent-purple border-accent-purple/20'
                   : 'bg-bg-tertiary text-text-muted border-transparent hover:text-text-secondary'
               }`}

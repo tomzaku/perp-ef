@@ -3,7 +3,7 @@ import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
 import { CompanyTag } from './CompanyTag';
 import { useAuth } from '../hooks/useAuth';
-import { useLabels } from '../hooks/useLabels';
+import { useTags } from '../hooks/useTags';
 
 interface QuestionCardProps {
   question: Question;
@@ -22,7 +22,7 @@ export function QuestionCard({
 }: QuestionCardProps) {
   const navigate = useNavigate();
   const { user, signInWithGoogle } = useAuth();
-  const questionLabels = useLabels((s) => s.questionLabels[question.id] || []);
+  const questionTags = useTags((s) => s.questionTags[question.id] || []);
 
   const handleProtectedAction = (action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,12 +92,12 @@ export function QuestionCard({
             {question.companies.map((c) => (
               <CompanyTag key={c} company={c} />
             ))}
-            {questionLabels.map((label) => (
+            {questionTags.map((tag) => (
               <span
-                key={label}
+                key={tag}
                 className="text-[10px] px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
               >
-                {label}
+                {tag}
               </span>
             ))}
           </div>

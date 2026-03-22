@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProgressStore } from '../hooks/useProgress';
-import { useLabels } from '../hooks/useLabels';
+import { useTags } from '../hooks/useTags';
 import { allQuestions } from '../data';
 import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
 
-const LABEL_COLORS = [
+const TAG_COLORS = [
   { bg: 'bg-accent-cyan/10', text: 'text-accent-cyan', border: 'border-accent-cyan/20' },
   { bg: 'bg-accent-purple/10', text: 'text-accent-purple', border: 'border-accent-purple/20' },
   { bg: 'bg-accent-orange/10', text: 'text-accent-orange', border: 'border-accent-orange/20' },
@@ -15,28 +15,28 @@ const LABEL_COLORS = [
   { bg: 'bg-accent-yellow/10', text: 'text-accent-yellow', border: 'border-accent-yellow/20' },
 ];
 
-function getLabelColor(index: number) {
-  return LABEL_COLORS[index % LABEL_COLORS.length];
+function getTagColor(index: number) {
+  return TAG_COLORS[index % TAG_COLORS.length];
 }
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const { completed, bookmarked } = useProgressStore();
-  const { labelNames, questionLabels, createLabel, deleteLabel, getQuestionsByLabel } = useLabels();
-  const [newLabel, setNewLabel] = useState('');
+  const { tagNames, questionTags, createTag, deleteTag, getQuestionsByTag } = useTags();
+  const [newTag, setNewTag] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'completed' | 'bookmarked' | string>('completed');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const handleCreateLabel = () => {
-    const trimmed = newLabel.trim();
+  const handleCreateTag = () => {
+    const trimmed = newTag.trim();
     if (!trimmed) return;
-    createLabel(trimmed);
-    setNewLabel('');
+    createTag(trimmed);
+    setNewTag('');
   };
 
-  const handleDeleteLabel = (name: string) => {
+  const handleDeleteTag = (name: string) => {
     if (confirmDelete === name) {
-      deleteLabel(name);
+      deleteTag(name);
       setConfirmDelete(null);
       if (selectedFilter === name) setSelectedFilter('completed');
     } else {
@@ -57,8 +57,8 @@ export function ProfilePage() {
     if (selectedFilter === 'all') return allQuestions.map((q) => q.id);
     if (selectedFilter === 'completed') return Array.from(completed);
     if (selectedFilter === 'bookmarked') return Array.from(bookmarked);
-    return getQuestionsByLabel(selectedFilter);
-  }, [selectedFilter, completed, bookmarked, questionLabels, labelNames]);
+    return getQuestionsByTag(selectedFilter);
+  }, [selectedFilter, completed, bookmarked, questionTags, tagNames]);
 
   const filteredQuestions = useMemo(
     () => filteredIds.map((id) => questionMap.get(id)).filter(Boolean) as Question[],
@@ -76,13 +76,13 @@ export function ProfilePage() {
     return byCategory;
   }, [completed]);
 
-  const labelStats = useMemo(() => {
+  const tagStats = useMemo(() => {
     const map: Record<string, number> = {};
-    labelNames.forEach((name) => {
-      map[name] = getQuestionsByLabel(name).length;
+    tagNames.forEach((name) => {
+      map[name] = getQuestionsByTag(name).length;
     });
     return map;
-  }, [labelNames, questionLabels]);
+  }, [tagNames, questionTags]);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -104,8 +104,8 @@ export function ProfilePage() {
           <p className="text-xs text-text-muted mt-1">Total Questions</p>
         </div>
         <div className="p-4 rounded-lg border border-border bg-bg-card">
-          <p className="text-2xl font-bold text-accent-purple font-code">{labelNames.length}</p>
-          <p className="text-xs text-text-muted mt-1">Labels</p>
+          <p className="text-2xl font-bold text-accent-purple font-code">{tagNames.length}</p>
+          <p className="text-xs text-text-muted mt-1">Tags</p>
         </div>
       </div>
 
@@ -140,23 +140,23 @@ export function ProfilePage() {
       {/* Labels Management */}
       <section className="mb-8">
         <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-          Custom Labels
+          Custom Tags
         </h2>
-        <p className="text-xs text-text-muted mb-3">Create labels to organize questions (e.g., "1st attempt failure", "top30", "review later").</p>
+        <p className="text-xs text-text-muted mb-3">Create tags to organize questions (e.g., "failed", "must try again", "30 mins").</p>
 
-        {/* Create new label */}
+        {/* Create new tag */}
         <div className="flex gap-2 mb-4">
           <input
             type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateLabel()}
-            placeholder="New label name..."
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateTag()}
+            placeholder="New tag name..."
             className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/20"
           />
           <button
-            onClick={handleCreateLabel}
-            disabled={!newLabel.trim()}
+            onClick={handleCreateTag}
+            disabled={!newTag.trim()}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-accent-cyan text-bg-primary hover:bg-accent-cyan/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Create
@@ -164,15 +164,15 @@ export function ProfilePage() {
         </div>
 
         {/* Label list */}
-        {labelNames.length === 0 ? (
+        {tagNames.length === 0 ? (
           <div className="text-center py-6 text-text-muted border border-dashed border-border rounded-lg">
-            <p className="text-xs">No labels yet. Create one above to get started.</p>
+            <p className="text-xs">No tags yet. Create one above to get started.</p>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {labelNames.map((name, i) => {
-              const color = getLabelColor(i);
-              const count = labelStats[name] || 0;
+            {tagNames.map((name, i) => {
+              const color = getTagColor(i);
+              const count = tagStats[name] || 0;
               return (
                 <div
                   key={name}
@@ -181,9 +181,9 @@ export function ProfilePage() {
                   <span>{name}</span>
                   <span className="opacity-60">{count}</span>
                   <button
-                    onClick={() => handleDeleteLabel(name)}
+                    onClick={() => handleDeleteTag(name)}
                     className="ml-0.5 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity cursor-pointer"
-                    title={confirmDelete === name ? 'Click again to confirm' : 'Delete label'}
+                    title={confirmDelete === name ? 'Click again to confirm' : 'Delete tag'}
                   >
                     {confirmDelete === name ? (
                       <span className="text-[10px]">confirm?</span>
@@ -225,9 +225,9 @@ export function ProfilePage() {
               {filter === 'completed' ? `Completed (${completed.size})` : filter === 'bookmarked' ? `Bookmarked (${bookmarked.size})` : `All (${allQuestions.length})`}
             </button>
           ))}
-          {labelNames.map((name, i) => {
-            const color = getLabelColor(i);
-            const count = labelStats[name] || 0;
+          {tagNames.map((name, i) => {
+            const color = getTagColor(i);
+            const count = tagStats[name] || 0;
             return (
               <button
                 key={name}
@@ -264,12 +264,12 @@ export function ProfilePage() {
                 <DifficultyBadge difficulty={q.difficulty} />
                 {/* Labels */}
                 <div className="flex items-center gap-1 shrink-0">
-                  {(questionLabels[q.id] || []).map((label) => {
-                    const idx = labelNames.indexOf(label);
-                    const color = getLabelColor(idx >= 0 ? idx : 0);
+                  {(questionTags[q.id] || []).map((tag) => {
+                    const idx = tagNames.indexOf(tag);
+                    const color = getTagColor(idx >= 0 ? idx : 0);
                     return (
-                      <span key={label} className={`text-[10px] px-1.5 py-0.5 rounded ${color.bg} ${color.text}`}>
-                        {label}
+                      <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded ${color.bg} ${color.text}`}>
+                        {tag}
                       </span>
                     );
                   })}

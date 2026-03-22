@@ -7,13 +7,12 @@ import { CodeBlock } from './CodeBlock';
 import { NotesSection } from './NotesSection';
 import { CodeEditor } from './CodeEditor';
 import { Markdown } from './Markdown';
-import { AnswerSession } from './AnswerSession';
 import { MockInterview } from './MockInterview';
 import { ReadAloud } from './ReadAloud';
 import { AuthGuard } from './AuthGuard';
 import { AskChatGpt } from './AskChatGpt';
 import { testConfigs } from '../data';
-import { useLabels } from '../hooks/useLabels';
+import { useTags } from '../hooks/useTags';
 
 interface QuestionDetailProps {
   question: Question;
@@ -55,22 +54,22 @@ export function QuestionDetail({
   const [showBruteForce, setShowBruteForce] = useState(false);
   const [showBruteForceExplanation, setShowBruteForceExplanation] = useState(false);
   const [showTakeaway, setShowTakeaway] = useState(false);
-  const [showLabelMenu, setShowLabelMenu] = useState(false);
-  const labelMenuRef = useRef<HTMLDivElement>(null);
-  const { labelNames, getLabels, toggleLabel, createLabel } = useLabels();
-  const questionLabels = getLabels(question.id);
-  const [newLabelInput, setNewLabelInput] = useState('');
+  const [showTagMenu, setShowTagMenu] = useState(false);
+  const tagMenuRef = useRef<HTMLDivElement>(null);
+  const { tagNames, getTags, toggleTag, createTag } = useTags();
+  const questionTags = getTags(question.id);
+  const [newTagInput, setNewTagInput] = useState('');
 
   useEffect(() => {
-    if (!showLabelMenu) return;
+    if (!showTagMenu) return;
     const handleClick = (e: MouseEvent) => {
-      if (labelMenuRef.current && !labelMenuRef.current.contains(e.target as Node)) {
-        setShowLabelMenu(false);
+      if (tagMenuRef.current && !tagMenuRef.current.contains(e.target as Node)) {
+        setShowTagMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [showLabelMenu]);
+  }, [showTagMenu]);
   return (
     <div className="animate-fade-in">
       {/* Sticky header bar */}
@@ -90,9 +89,6 @@ export function QuestionDetail({
           <h1 className="text-lg sm:text-xl font-display font-bold text-text-primary truncate">
             {question.title}
           </h1>
-          <div className="shrink-0">
-            <AnswerSession questionId={question.id} />
-          </div>
         </div>
       </div>
 
@@ -161,12 +157,12 @@ export function QuestionDetail({
               LeetCode
             </a>
           )}
-          {/* Label button */}
-          <div className="relative" ref={labelMenuRef}>
+          {/* Tag button */}
+          <div className="relative" ref={tagMenuRef}>
             <button
-              onClick={() => setShowLabelMenu(!showLabelMenu)}
+              onClick={() => setShowTagMenu(!showTagMenu)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
-                questionLabels.length > 0
+                questionTags.length > 0
                   ? 'bg-accent-purple/10 text-accent-purple border-accent-purple/30'
                   : 'bg-bg-tertiary text-text-secondary border-border hover:border-accent-purple/30'
               }`}
@@ -175,20 +171,17 @@ export function QuestionDetail({
                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                 <line x1="7" y1="7" x2="7.01" y2="7" />
               </svg>
-              Label{questionLabels.length > 0 ? ` (${questionLabels.length})` : ''}
+              Tag{questionTags.length > 0 ? ` (${questionTags.length})` : ''}
             </button>
 
-            {showLabelMenu && (
+            {showTagMenu && (
               <div className="absolute top-full left-0 mt-1 w-56 bg-bg-card border border-border rounded-lg shadow-lg z-20 py-1 animate-fade-in">
-                {labelNames.length === 0 && !newLabelInput && (
-                  <p className="px-3 py-2 text-xs text-text-muted">No labels yet. Type below to create one.</p>
-                )}
-                {labelNames.map((name) => {
-                  const active = questionLabels.includes(name);
+                {tagNames.map((name) => {
+                  const active = questionTags.includes(name);
                   return (
                     <button
                       key={name}
-                      onClick={() => toggleLabel(question.id, name)}
+                      onClick={() => toggleTag(question.id, name)}
                       className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-bg-hover transition-colors cursor-pointer"
                     >
                       <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
@@ -207,16 +200,16 @@ export function QuestionDetail({
                 <div className="border-t border-border mt-1 pt-1 px-2 pb-1">
                   <input
                     type="text"
-                    value={newLabelInput}
-                    onChange={(e) => setNewLabelInput(e.target.value)}
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newLabelInput.trim()) {
-                        createLabel(newLabelInput.trim());
-                        toggleLabel(question.id, newLabelInput.trim());
-                        setNewLabelInput('');
+                      if (e.key === 'Enter' && newTagInput.trim()) {
+                        createTag(newTagInput.trim());
+                        toggleTag(question.id, newTagInput.trim());
+                        setNewTagInput('');
                       }
                     }}
-                    placeholder="Create new label..."
+                    placeholder="Create new tag..."
                     className="w-full bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple/50"
                   />
                 </div>
@@ -225,15 +218,15 @@ export function QuestionDetail({
           </div>
         </div>
 
-        {/* Applied labels */}
-        {questionLabels.length > 0 && (
+        {/* Applied tags */}
+        {questionTags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
-            {questionLabels.map((label) => (
+            {questionTags.map((tag) => (
               <span
-                key={label}
+                key={tag}
                 className="text-xs px-2.5 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
               >
-                {label}
+                {tag}
               </span>
             ))}
           </div>
