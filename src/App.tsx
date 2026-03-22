@@ -17,6 +17,7 @@ import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
 import { Recorder } from './components/Recorder';
 import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
+import { ProfilePage } from './components/ProfilePage';
 import { useVisibleSections } from './hooks/useVisibleSections';
 
 function QuestionPage() {
@@ -287,6 +288,9 @@ function App() {
 
           {/* English Speaking */}
           <Route path="/english-speaking" element={<EnglishSpeakingPage />} />
+
+          {/* Profile */}
+          <Route path="/profile" element={<ProfilePage />} />
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />

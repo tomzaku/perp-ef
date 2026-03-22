@@ -172,8 +172,28 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
         </div>
       </nav>
 
-      {/* Settings */}
-      <div className="px-3 pb-1">
+      {/* Profile & Settings */}
+      <div className="px-3 pb-1 space-y-0.5">
+        <Link
+          to="/profile"
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${
+            location.pathname === '/profile'
+              ? 'bg-accent-cyan/10 text-accent-cyan'
+              : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
+          }`}
+        >
+          <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
+            location.pathname === '/profile'
+              ? 'bg-accent-cyan/20 text-accent-cyan'
+              : 'bg-bg-tertiary text-text-muted'
+          }`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <span className="text-sm font-medium">Profile</span>
+        </Link>
         <Link
           to="/settings"
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${

@@ -3,6 +3,7 @@ import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
 import { CompanyTag } from './CompanyTag';
 import { useAuth } from '../hooks/useAuth';
+import { useLabels } from '../hooks/useLabels';
 
 interface QuestionCardProps {
   question: Question;
@@ -21,6 +22,7 @@ export function QuestionCard({
 }: QuestionCardProps) {
   const navigate = useNavigate();
   const { user, signInWithGoogle } = useAuth();
+  const questionLabels = useLabels((s) => s.questionLabels[question.id] || []);
 
   const handleProtectedAction = (action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -89,6 +91,14 @@ export function QuestionCard({
           <div className="flex flex-wrap gap-1.5 mb-2">
             {question.companies.map((c) => (
               <CompanyTag key={c} company={c} />
+            ))}
+            {questionLabels.map((label) => (
+              <span
+                key={label}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
+              >
+                {label}
+              </span>
             ))}
           </div>
 
