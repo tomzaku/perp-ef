@@ -1,49 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getTranscriber, decodeAudioBlob } from '../lib/whisperStt';
 
 interface VoiceRecorderProps {
   questionId: string;
-}
-
-// ─── Whisper (offline STT fallback) ───────────────────────────────────
-let transcriberPromise: Promise<TranscriberPipeline> | null = null;
-
-interface TranscriberPipeline {
-  (audio: Float32Array): Promise<{ text: string }>;
-}
-
-async function getTranscriber(
-  onProgress?: (progress: number) => void,
-): Promise<TranscriberPipeline> {
-  if (!transcriberPromise) {
-    transcriberPromise = (async () => {
-      const { pipeline } = await import('@huggingface/transformers');
-      const transcriber = await pipeline(
-        'automatic-speech-recognition',
-        'onnx-community/whisper-tiny.en',
-        {
-          dtype: 'q8',
-          device: 'wasm',
-          progress_callback: (p) => {
-            if ('progress' in p && typeof p.progress === 'number' && onProgress) {
-              onProgress(p.progress);
-            }
-          },
-        },
-      );
-      return (audio: Float32Array) =>
-        transcriber(audio) as Promise<{ text: string }>;
-    })();
-  }
-  return transcriberPromise;
-}
-
-async function decodeAudioBlob(blob: Blob): Promise<Float32Array> {
-  const arrayBuffer = await blob.arrayBuffer();
-  const audioCtx = new AudioContext({ sampleRate: 16000 });
-  const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-  const float32 = decoded.getChannelData(0);
-  await audioCtx.close();
-  return float32;
 }
 
 // ─── Web Speech API probe ─────────────────────────────────────────────

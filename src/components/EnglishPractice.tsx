@@ -5,6 +5,7 @@ import { useLearnings, type LearningCategory } from '../hooks/useLearnings';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 import { speakWithKokoro, stopKokoroAudio, preloadKokoro } from '../lib/kokoroTts';
+import { transcribeBlob } from '../lib/whisperStt';
 import { getApiKey } from '../hooks/useAIChat';
 import { useFabStore } from '../hooks/useFabStore';
 
@@ -48,6 +49,8 @@ export function EnglishPractice() {
   const [autoRead, setAutoRead] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingText, setRecordingText] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [whisperProgress, setWhisperProgress] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [summaryText, setSummaryText] = useState<string | null>(null);
@@ -209,15 +212,22 @@ export function EnglishPractice() {
   };
 
   // ─── Voice recording (speech recognition + audio capture) ──
-  const startRecording = useCallback(async () => {
-    const SpeechRec = getSpeechRecognition();
-    if (!SpeechRec) return;
+  // Track whether Web Speech produced any text during this session
+  const speechProducedTextRef = useRef(false);
+  const inputBeforeRecordRef = useRef('');
 
-    // Get mic stream for both MediaRecorder and speech recognition
+  const startRecording = useCallback(async () => {
+    console.log('[voice] startRecording called');
+
+    // Get mic stream
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch { return; }
+      console.log('[voice] mic stream acquired, tracks:', stream.getTracks().map(t => t.kind + ':' + t.readyState));
+    } catch (err) {
+      console.error('[voice] getUserMedia failed:', err);
+      return;
+    }
 
     // Start MediaRecorder to capture audio
     mediaStreamRef.current = stream;
@@ -225,80 +235,112 @@ export function EnglishPractice() {
     try {
       const recorder = new MediaRecorder(stream);
       recorder.ondataavailable = (e) => {
+        console.log('[voice] MediaRecorder data chunk:', e.data.size, 'bytes');
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
-    } catch {
-      // MediaRecorder not available — continue without audio capture
+      console.log('[voice] MediaRecorder started, state:', recorder.state);
+    } catch (err) {
+      console.warn('[voice] MediaRecorder not available:', err);
     }
 
-    const recognition = new SpeechRec();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    const baseText = input;
-    let processedFinals = 0;
-    let accumulatedFinals = '';
+    speechProducedTextRef.current = false;
+    inputBeforeRecordRef.current = input;
 
-    recognition.onresult = (event) => {
-      let interim = '';
-      for (let i = 0; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          if (i >= processedFinals) {
-            const text = event.results[i][0].transcript.trim();
-            if (text) accumulatedFinals += (accumulatedFinals ? ' ' : '') + text;
-            processedFinals = i + 1;
+    // Start Web Speech API if available (live transcription)
+    const SpeechRec = getSpeechRecognition();
+    console.log('[voice] SpeechRecognition constructor:', SpeechRec ? 'available' : 'NOT available');
+    if (SpeechRec) {
+      const recognition = new SpeechRec();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      const baseText = input;
+      let processedFinals = 0;
+      let accumulatedFinals = '';
+
+      recognition.onresult = (event) => {
+        speechProducedTextRef.current = true;
+        console.log('[voice] SpeechRecognition onresult, results count:', event.results.length);
+        let interim = '';
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            if (i >= processedFinals) {
+              const text = event.results[i][0].transcript.trim();
+              console.log('[voice] final text:', JSON.stringify(text));
+              if (text) accumulatedFinals += (accumulatedFinals ? ' ' : '') + text;
+              processedFinals = i + 1;
+            }
+          } else {
+            interim += event.results[i][0].transcript;
           }
-        } else {
-          interim += event.results[i][0].transcript;
         }
+        if (interim) console.log('[voice] interim text:', JSON.stringify(interim));
+        const combined = baseText + (baseText && accumulatedFinals ? ' ' : '') + accumulatedFinals;
+        setInput(combined + (interim ? (combined ? ' ' : '') + interim : ''));
+        setRecordingText(interim);
+      };
+      recognition.onerror = (e) => {
+        console.warn('[voice] SpeechRecognition error:', e.error);
+        if (e.error !== 'no-speech' && e.error !== 'aborted') {
+          setIsRecording(false);
+          recognitionRef.current = null;
+        }
+      };
+      recognition.onend = () => {
+        console.log('[voice] SpeechRecognition onend, ref match:', recognitionRef.current === recognition);
+        if (recognitionRef.current === recognition) {
+          try { recognition.start(); } catch { /* done */ }
+        }
+      };
+      try {
+        recognition.start();
+        recognitionRef.current = recognition;
+        console.log('[voice] SpeechRecognition started successfully');
+      } catch (err) {
+        console.error('[voice] SpeechRecognition start() failed:', err);
       }
-      const combined = baseText + (baseText && accumulatedFinals ? ' ' : '') + accumulatedFinals;
-      setInput(combined + (interim ? (combined ? ' ' : '') + interim : ''));
-      setRecordingText(interim);
-    };
-    recognition.onerror = (e) => {
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
-        setIsRecording(false);
-        recognitionRef.current = null;
-      }
-    };
-    recognition.onend = () => {
-      if (recognitionRef.current === recognition) {
-        try { recognition.start(); } catch { /* done */ }
-      }
-    };
-    try {
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsRecording(true);
-      setRecordingText('');
-    } catch { /* not available */ }
+    }
+
+    setIsRecording(true);
+    setRecordingText('');
   }, [input]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
+    console.log('[voice] stopRecording called');
+
+    // Stop speech recognition
     if (recognitionRef.current) {
       const rec = recognitionRef.current;
       recognitionRef.current = null;
       rec.stop();
+      console.log('[voice] SpeechRecognition stopped');
     }
 
-    // Stop MediaRecorder and save audio blob
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      const recorder = mediaRecorderRef.current;
-      recorder.onstop = () => {
-        if (audioChunksRef.current.length > 0) {
-          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const url = URL.createObjectURL(blob);
-          // Store for the message that's about to be sent (current messages.length will be the user message index)
-          const msgIndex = messages.length;
-          setVoiceRecordings((prev) => ({ ...prev, [msgIndex]: url }));
-        }
-        audioChunksRef.current = [];
-      };
-      recorder.stop();
-    }
+    // Stop MediaRecorder and collect audio blob
+    console.log('[voice] stopping MediaRecorder, state:', mediaRecorderRef.current?.state);
+    const audioBlob = await new Promise<Blob | null>((resolve) => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        const recorder = mediaRecorderRef.current;
+        recorder.onstop = () => {
+          console.log('[voice] MediaRecorder onstop, chunks:', audioChunksRef.current.length);
+          if (audioChunksRef.current.length > 0) {
+            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            console.log('[voice] audio blob created:', blob.size, 'bytes');
+            resolve(blob);
+          } else {
+            console.warn('[voice] no audio chunks collected');
+            resolve(null);
+          }
+          audioChunksRef.current = [];
+        };
+        recorder.stop();
+      } else {
+        console.warn('[voice] MediaRecorder not active, no blob');
+        resolve(null);
+      }
+    });
     mediaRecorderRef.current = null;
 
     // Stop mic stream
@@ -309,8 +351,53 @@ export function EnglishPractice() {
 
     setIsRecording(false);
     setRecordingText('');
+
+    console.log('[voice] decision state: speechProducedText=', speechProducedTextRef.current,
+      'inputBefore=', JSON.stringify(inputBeforeRecordRef.current),
+      'inputNow=', JSON.stringify(input),
+      'audioBlob=', audioBlob ? audioBlob.size + 'bytes' : 'null');
+
+    // Save audio blob for playback
+    if (audioBlob) {
+      const url = URL.createObjectURL(audioBlob);
+      const msgIndex = messages.length;
+      setVoiceRecordings((prev) => ({ ...prev, [msgIndex]: url }));
+
+      // Fall back to Whisper if Web Speech API produced no text
+      // (handles browsers like Arc where the API exists but doesn't work)
+      const inputChanged = input.trim() !== inputBeforeRecordRef.current.trim();
+      const needsWhisper = !speechProducedTextRef.current && !inputChanged;
+
+      console.log('[voice] inputChanged=', inputChanged, 'needsWhisper=', needsWhisper);
+
+      if (needsWhisper) {
+        console.log('[voice] falling back to Whisper transcription...');
+        setIsTranscribing(true);
+        setWhisperProgress(null);
+        try {
+          const text = await transcribeBlob(audioBlob, (p) => {
+            console.log('[voice] Whisper progress:', p);
+            setWhisperProgress(p);
+          });
+          console.log('[voice] Whisper result:', JSON.stringify(text));
+          if (text) {
+            setInput((prev) => (prev ? prev + ' ' : '') + text);
+          }
+        } catch (err) {
+          console.error('[voice] Whisper transcription failed:', err);
+        } finally {
+          setIsTranscribing(false);
+          setWhisperProgress(null);
+        }
+      } else {
+        console.log('[voice] Web Speech produced text, skipping Whisper');
+      }
+    } else {
+      console.warn('[voice] no audio blob, cannot transcribe');
+    }
+
     inputRef.current?.focus();
-  }, [messages.length]);
+  }, [messages.length, input]);
 
   // Play/stop voice recording
   const playVoiceRecording = useCallback((msgIndex: number) => {
@@ -932,6 +1019,19 @@ export function EnglishPractice() {
                 {recordingText && (
                   <span className="text-sm text-text-muted italic truncate">{recordingText}</span>
                 )}
+                {!recordingText && (
+                  <span className="text-xs text-text-muted">(Whisper will transcribe if needed)</span>
+                )}
+              </div>
+            )}
+            {isTranscribing && (
+              <div className="flex items-center gap-2 mb-2 px-1 animate-fade-in">
+                <span className="w-4 h-4 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin" />
+                <span className="text-sm text-accent-cyan font-medium">
+                  {whisperProgress != null && whisperProgress < 100
+                    ? `Loading Whisper model... ${Math.round(whisperProgress)}%`
+                    : 'Transcribing with Whisper...'}
+                </span>
               </div>
             )}
             <div className="flex items-end gap-2">
@@ -940,36 +1040,34 @@ export function EnglishPractice() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isRecording ? 'Listening...' : 'Type or use mic to speak...'}
+                placeholder={isTranscribing ? 'Transcribing...' : isRecording ? 'Listening...' : 'Type or use mic to speak...'}
                 rows={1}
-                disabled={isLoading}
+                disabled={isLoading || isTranscribing}
                 className={`flex-1 bg-bg-primary border border-border rounded-lg px-3 text-text-primary resize-none focus:outline-none focus:border-accent-green/50 focus:ring-1 focus:ring-accent-green/20 placeholder:text-text-muted disabled:opacity-50 max-h-[200px] ${maximized ? 'py-3 text-2xl min-h-[3.25rem]' : 'py-2 text-sm min-h-[2.5rem]'}`}
               />
-              {getSpeechRecognition() && (
-                <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isLoading}
-                  className={`p-2.5 rounded-lg transition-all cursor-pointer shrink-0 ${
-                    isRecording
-                      ? 'bg-accent-red/10 text-accent-red border border-accent-red/30 hover:bg-accent-red/20'
-                      : 'bg-bg-tertiary text-text-muted border border-border hover:text-accent-green hover:border-accent-green/30'
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
-                  title={isRecording ? 'Stop recording' : 'Voice input'}
-                >
-                  {isRecording ? (
-                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-                      <rect x="3" y="3" width="10" height="10" rx="1" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      <line x1="12" y1="19" x2="12" y2="23" />
-                      <line x1="8" y1="23" x2="16" y2="23" />
-                    </svg>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading || isTranscribing}
+                className={`p-2.5 rounded-lg transition-all cursor-pointer shrink-0 ${
+                  isRecording
+                    ? 'bg-accent-red/10 text-accent-red border border-accent-red/30 hover:bg-accent-red/20'
+                    : 'bg-bg-tertiary text-text-muted border border-border hover:text-accent-green hover:border-accent-green/30'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                title={isRecording ? 'Stop recording' : 'Voice input'}
+              >
+                {isRecording ? (
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="3" y="3" width="10" height="10" rx="1" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                )}
+              </button>
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
@@ -1000,10 +1098,7 @@ export function EnglishPractice() {
             )}
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-text-muted">
-                {getSpeechRecognition()
-                  ? 'Enter to send · Shift+Enter for new line · Mic for voice'
-                  : 'Enter to send · Shift+Enter for new line'
-                }
+                Enter to send · Shift+Enter for new line · Mic for voice
               </span>
               <span className="text-xs text-text-muted">Powered by Claude</span>
             </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useFabStore } from '../hooks/useFabStore';
+import { transcribeBlob } from '../lib/whisperStt';
 
 // ─── Speech Recognition helpers ──────────────────────────────────────
 interface SpeechRecognitionInstance extends EventTarget {
@@ -54,6 +55,8 @@ export function Recorder() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [maximized, setMaximized] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [whisperProgress, setWhisperProgress] = useState<number | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -62,6 +65,7 @@ export function Recorder() {
   const startTimeRef = useRef(0);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transcriptRef = useRef('');
+  const speechProducedTextRef = useRef(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
   // Cleanup on unmount or close
@@ -106,6 +110,7 @@ export function Recorder() {
         mode === 'video' ? { audio: true, video: true } : { audio: true };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      console.log('[recorder] mic stream acquired');
 
       const mimeType = mode === 'video'
         ? (MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm')
@@ -115,6 +120,7 @@ export function Recorder() {
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
       transcriptRef.current = '';
+      speechProducedTextRef.current = false;
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -125,18 +131,63 @@ export function Recorder() {
         const url = URL.createObjectURL(blob);
         const duration = (Date.now() - startTimeRef.current) / 1000;
 
-        setRecordings((prev) => [
-          {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            url,
-            blob,
-            mode,
-            duration,
-            transcript: transcriptRef.current,
-            createdAt: Date.now(),
-          },
-          ...prev,
-        ]);
+        console.log('[recorder] onstop: speechProducedText=', speechProducedTextRef.current,
+          'transcript=', JSON.stringify(transcriptRef.current),
+          'blob=', blob.size, 'bytes');
+
+        // If Web Speech produced no transcript, fall back to Whisper
+        if (transcriptEnabled && !speechProducedTextRef.current && blob.size > 0) {
+          console.log('[recorder] Web Speech produced no text, falling back to Whisper...');
+          setIsTranscribing(true);
+          setWhisperProgress(null);
+          transcribeBlob(blob, (p) => {
+            console.log('[recorder] Whisper progress:', p);
+            setWhisperProgress(p);
+          })
+            .then((text) => {
+              console.log('[recorder] Whisper result:', JSON.stringify(text));
+              const transcript = text || '';
+              transcriptRef.current = transcript;
+              setRecordings((prev) => [
+                {
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                  url,
+                  blob,
+                  mode,
+                  duration,
+                  transcript,
+                  createdAt: Date.now(),
+                },
+                ...prev,
+              ]);
+            })
+            .catch((err) => {
+              console.error('[recorder] Whisper failed:', err);
+              // Still save the recording, just without transcript
+              setRecordings((prev) => [
+                { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, url, blob, mode, duration, transcript: '', createdAt: Date.now() },
+                ...prev,
+              ]);
+            })
+            .finally(() => {
+              setIsTranscribing(false);
+              setWhisperProgress(null);
+            });
+        } else {
+          // Web Speech worked (or transcript disabled) — save immediately
+          setRecordings((prev) => [
+            {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              url,
+              blob,
+              mode,
+              duration,
+              transcript: transcriptRef.current,
+              createdAt: Date.now(),
+            },
+            ...prev,
+          ]);
+        }
       };
 
       recorder.start(1000); // collect in 1s chunks
@@ -152,6 +203,7 @@ export function Recorder() {
       // Speech recognition for transcript
       if (transcriptEnabled) {
         const SpeechRec = getSpeechRecognition();
+        console.log('[recorder] SpeechRecognition:', SpeechRec ? 'available' : 'NOT available');
         if (SpeechRec) {
           const recognition = new SpeechRec();
           recognition.continuous = true;
@@ -160,12 +212,15 @@ export function Recorder() {
 
           let processedCount = 0;
           recognition.onresult = (e) => {
+            speechProducedTextRef.current = true;
+            console.log('[recorder] SpeechRecognition onresult, results:', e.results.length);
             let interim = '';
             for (let i = 0; i < e.results.length; i++) {
               const result = e.results[i];
               if (result.isFinal) {
                 if (i >= processedCount) {
                   const text = result[0].transcript.trim();
+                  console.log('[recorder] final:', JSON.stringify(text));
                   if (text) transcriptRef.current += (transcriptRef.current ? ' ' : '') + text;
                   processedCount = i + 1;
                 }
@@ -175,20 +230,28 @@ export function Recorder() {
             }
             setLiveTranscript((transcriptRef.current + (interim ? ' ' + interim : '')).trim());
           };
-          recognition.onerror = () => {};
+          recognition.onerror = (e) => {
+            console.warn('[recorder] SpeechRecognition error:', e.error);
+          };
           recognition.onend = () => {
+            console.log('[recorder] SpeechRecognition onend');
             // Restart if still recording — reset processedCount since results reset
             if (mediaRecorderRef.current?.state === 'recording') {
               processedCount = 0;
               try { recognition.start(); } catch { /* ignore */ }
             }
           };
-          recognition.start();
-          recognitionRef.current = recognition;
+          try {
+            recognition.start();
+            recognitionRef.current = recognition;
+            console.log('[recorder] SpeechRecognition started');
+          } catch (err) {
+            console.error('[recorder] SpeechRecognition start() failed:', err);
+          }
         }
       }
     } catch (err) {
-      console.error('Failed to start recording:', err);
+      console.error('[recorder] Failed to start recording:', err);
     }
   }, [mode, transcriptEnabled]);
 
@@ -358,6 +421,18 @@ export function Recorder() {
           <div className="mt-3 px-3 py-2 rounded-lg bg-bg-tertiary border border-border">
             <p className="text-[10px] text-text-muted mb-1 font-semibold uppercase tracking-wider">Live Transcript</p>
             <p className="text-xs text-text-secondary leading-relaxed">{liveTranscript}</p>
+          </div>
+        )}
+
+        {/* Whisper transcription progress */}
+        {isTranscribing && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-accent-cyan/5 border border-accent-cyan/20 flex items-center gap-2 animate-fade-in">
+            <span className="w-4 h-4 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin shrink-0" />
+            <span className="text-xs text-accent-cyan font-medium">
+              {whisperProgress != null && whisperProgress < 100
+                ? `Loading Whisper model... ${Math.round(whisperProgress)}%`
+                : 'Transcribing with Whisper...'}
+            </span>
           </div>
         )}
       </div>
