@@ -58,6 +58,14 @@ export function EnglishPractice() {
   const [activeTab, setActiveTab] = useState<DrawerTab>('chat');
   const [learningFilter, setLearningFilter] = useState<LearningCategory | 'all'>('all');
 
+  // Voice recording storage: map message index → audio blob URL
+  const [voiceRecordings, setVoiceRecordings] = useState<Record<number, string>>({});
+  const [playingVoice, setPlayingVoice] = useState<number | null>(null);
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -200,14 +208,30 @@ export function EnglishPractice() {
     }
   };
 
-  // ─── Voice recording ─────────────────────────────────────
+  // ─── Voice recording (speech recognition + audio capture) ──
   const startRecording = useCallback(async () => {
     const SpeechRec = getSpeechRecognition();
     if (!SpeechRec) return;
+
+    // Get mic stream for both MediaRecorder and speech recognition
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch { return; }
+
+    // Start MediaRecorder to capture audio
+    mediaStreamRef.current = stream;
+    audioChunksRef.current = [];
+    try {
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+    } catch {
+      // MediaRecorder not available — continue without audio capture
+    }
 
     const recognition = new SpeechRec();
     recognition.continuous = true;
@@ -259,16 +283,80 @@ export function EnglishPractice() {
       recognitionRef.current = null;
       rec.stop();
     }
+
+    // Stop MediaRecorder and save audio blob
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      const recorder = mediaRecorderRef.current;
+      recorder.onstop = () => {
+        if (audioChunksRef.current.length > 0) {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          // Store for the message that's about to be sent (current messages.length will be the user message index)
+          const msgIndex = messages.length;
+          setVoiceRecordings((prev) => ({ ...prev, [msgIndex]: url }));
+        }
+        audioChunksRef.current = [];
+      };
+      recorder.stop();
+    }
+    mediaRecorderRef.current = null;
+
+    // Stop mic stream
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+
     setIsRecording(false);
     setRecordingText('');
     inputRef.current?.focus();
-  }, []);
+  }, [messages.length]);
+
+  // Play/stop voice recording
+  const playVoiceRecording = useCallback((msgIndex: number) => {
+    // Stop any currently playing recording
+    if (voiceAudioRef.current) {
+      voiceAudioRef.current.pause();
+      voiceAudioRef.current = null;
+    }
+
+    if (playingVoice === msgIndex) {
+      setPlayingVoice(null);
+      return;
+    }
+
+    const url = voiceRecordings[msgIndex];
+    if (!url) return;
+
+    const audio = new Audio(url);
+    voiceAudioRef.current = audio;
+    setPlayingVoice(msgIndex);
+
+    audio.onended = () => {
+      voiceAudioRef.current = null;
+      setPlayingVoice(null);
+    };
+    audio.onerror = () => {
+      voiceAudioRef.current = null;
+      setPlayingVoice(null);
+    };
+    audio.play();
+  }, [playingVoice, voiceRecordings]);
 
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
         recognitionRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.pause();
       }
     };
   }, []);
@@ -751,7 +839,33 @@ export function EnglishPractice() {
                         </div>
                       </>
                     ) : (
-                      <div className={`${maximized ? 'text-2xl' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>{msg.content}</div>
+                      <>
+                        <div className={`${maximized ? 'text-2xl' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>{msg.content}</div>
+                        {voiceRecordings[i] && (
+                          <div className="mt-2 flex justify-end">
+                            <button
+                              onClick={() => playVoiceRecording(i)}
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer border ${
+                                playingVoice === i
+                                  ? 'bg-accent-green/20 text-accent-green border-accent-green/30'
+                                  : 'bg-accent-green/5 text-accent-green/70 border-accent-green/15 hover:bg-accent-green/15 hover:text-accent-green'
+                              }`}
+                              title={playingVoice === i ? 'Stop playback' : 'Play your recording'}
+                            >
+                              {playingVoice === i ? (
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                                  <rect x="0" y="0" width="10" height="10" rx="1" />
+                                </svg>
+                              ) : (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                              )}
+                              {playingVoice === i ? 'Stop' : 'My voice'}
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
