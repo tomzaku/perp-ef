@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Question, SavedConversation } from '../types/question';
-import { useAIChat, getApiKey, setApiKey } from '../hooks/useAIChat';
+import { useAIChat } from '../hooks/useAIChat';
 import { useConversations } from '../hooks/useConversations';
+import { getCurrentApiKey, setApiKeyForProvider, getProvider, getProviderConfig } from '../lib/aiProviders';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
@@ -35,7 +36,7 @@ export function MockInterview({ question }: MockInterviewProps) {
   const [input, setInput] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKeyForm, setShowApiKeyForm] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(() => !!getApiKey());
+  const [hasApiKey, setHasApiKey] = useState(() => !!getCurrentApiKey());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [autoRead, setAutoRead] = useState(false);
@@ -241,7 +242,7 @@ export function MockInterview({ question }: MockInterviewProps) {
   const handleSaveApiKey = () => {
     const key = apiKeyInput.trim();
     if (key) {
-      setApiKey(key);
+      setApiKeyForProvider(getProvider(), key);
       setHasApiKey(true);
       setShowApiKeyForm(false);
       setApiKeyInput('');
@@ -322,7 +323,7 @@ export function MockInterview({ question }: MockInterviewProps) {
                   value={apiKeyInput}
                   onChange={(e) => setApiKeyInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
-                  placeholder="sk-ant-..."
+                  placeholder={getProviderConfig().placeholder}
                   className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-code focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted"
                   autoFocus
                 />
@@ -337,14 +338,14 @@ export function MockInterview({ question }: MockInterviewProps) {
               <p className="text-[11px] text-text-muted leading-relaxed">
                 Get your API key from{' '}
                 <a
-                  href="https://console.anthropic.com/settings/keys"
+                  href={getProviderConfig().keysUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-accent-purple hover:underline"
                 >
-                  console.anthropic.com
+                  {getProviderConfig().keysLabel}
                 </a>
-                {' '}&rarr; API Keys &rarr; Create Key. It starts with <code className="text-[10px] font-code bg-bg-tertiary px-1 py-0.5 rounded">sk-ant-...</code> and is stored locally in your browser.
+                . It starts with <code className="text-[10px] font-code bg-bg-tertiary px-1 py-0.5 rounded">{getProviderConfig().placeholder}</code> and is stored locally in your browser.
               </p>
             </div>
           )}
@@ -660,7 +661,7 @@ export function MockInterview({ question }: MockInterviewProps) {
               }
             </span>
             <span className="text-[10px] text-text-muted">
-              Powered by Claude
+              Powered by {getProviderConfig().label}
             </span>
           </div>
         </div>

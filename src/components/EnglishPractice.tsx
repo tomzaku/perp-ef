@@ -6,7 +6,7 @@ import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 import { speakWithKokoro, stopKokoroAudio, preloadKokoro } from '../lib/kokoroTts';
 import { transcribeBlob } from '../lib/whisperStt';
-import { getApiKey } from '../hooks/useAIChat';
+import { getCurrentApiKey, getProviderConfig } from '../lib/aiProviders';
 import { useFabStore } from '../hooks/useFabStore';
 import { HoverSentence } from './HoverSentence';
 
@@ -456,7 +456,7 @@ export function EnglishPractice() {
   };
 
   const handlePickTopic = (topicId: TopicId) => {
-    if (!getApiKey() || !selectedMode) return;
+    if (!getCurrentApiKey() || !selectedMode) return;
     lastReadIndexRef.current = -1;
     prevMessageCountRef.current = 0;
 
@@ -512,7 +512,7 @@ export function EnglishPractice() {
     }
   }, [deleteConversation, activeConvId, handleNewConversation]);
 
-  const hasApiKey = !!getApiKey();
+  const hasApiKey = !!getCurrentApiKey();
   const userMessageCount = messages.filter((m) => m.role === 'user').length;
   const inConversation = !!currentTopic;
 
@@ -540,7 +540,7 @@ export function EnglishPractice() {
           </p>
           {!hasApiKey && (
             <div className="mb-4 p-3 rounded-lg bg-accent-yellow/10 border border-accent-yellow/20 text-sm text-accent-yellow">
-              Set your Anthropic API key first — use the Mock Interview section or Settings.
+              Set your {getProviderConfig().label} API key first — go to Settings to configure.
             </div>
           )}
           <div className="grid gap-3">
@@ -1105,7 +1105,7 @@ export function EnglishPractice() {
               <span className="text-xs text-text-muted">
                 Enter to send · Shift+Enter for new line · Mic for voice
               </span>
-              <span className="text-xs text-text-muted">Powered by Claude</span>
+              <span className="text-xs text-text-muted">Powered by {getProviderConfig().label}</span>
             </div>
           </div>
         )}

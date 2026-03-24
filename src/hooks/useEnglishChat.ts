@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { getApiKey } from './useAIChat';
+import { callAI, getCurrentApiKey, getProviderConfig } from '../lib/aiProviders';
 import { extractLearnings } from './useLearnings';
 import type { Learning } from './useLearnings';
 
@@ -155,41 +155,6 @@ export function useEnglishChat() {
     return displayText;
   }, []);
 
-  const callApi = useCallback(async (msgs: { role: string; content: string }[], topic: TopicId, practiceMode: PracticeMode) => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Please set your Anthropic API key first (Settings or Mock Interview).');
-      return null;
-    }
-
-    abortRef.current = new AbortController();
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: practiceMode === 'feedback' ? 1024 : 512,
-        system: buildSystemPrompt(topic, practiceMode),
-        messages: msgs.map((m) => ({ role: m.role, content: m.content })),
-      }),
-      signal: abortRef.current.signal,
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => null);
-      throw new Error(errData?.error?.message || `API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.content?.[0]?.text || 'No response received.';
-  }, []);
-
   const startConversation = useCallback(async (topicId: TopicId, practiceMode: PracticeMode) => {
     setMessages([]);
     setIsLoading(true);
@@ -199,16 +164,17 @@ export function useEnglishChat() {
     topicRef.current = topicId;
     modeRef.current = practiceMode;
 
+    abortRef.current = new AbortController();
+
     try {
-      const rawText = await callApi(
-        [{ role: 'user', content: 'Start the conversation. Greet me and ask me the first question.' }],
-        topicId,
-        practiceMode,
-      );
-      if (rawText) {
-        const displayText = processResponse(rawText);
-        setMessages([{ role: 'assistant', content: displayText }]);
-      }
+      const rawText = await callAI({
+        system: buildSystemPrompt(topicId, practiceMode),
+        messages: [{ role: 'user', content: 'Start the conversation. Greet me and ask me the first question.' }],
+        maxTokens: practiceMode === 'feedback' ? 1024 : 512,
+        signal: abortRef.current.signal,
+      });
+      const displayText = processResponse(rawText);
+      setMessages([{ role: 'assistant', content: displayText }]);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : String(err));
@@ -216,7 +182,7 @@ export function useEnglishChat() {
       setIsLoading(false);
       abortRef.current = null;
     }
-  }, [callApi, processResponse]);
+  }, [processResponse]);
 
   const sendMessage = useCallback(async (userMessage: string) => {
     const topic = topicRef.current;
@@ -228,12 +194,17 @@ export function useEnglishChat() {
     setIsLoading(true);
     setError(null);
 
+    abortRef.current = new AbortController();
+
     try {
-      const rawText = await callApi(newMessages, topic, practiceMode);
-      if (rawText) {
-        const displayText = processResponse(rawText);
-        setMessages([...newMessages, { role: 'assistant', content: displayText }]);
-      }
+      const rawText = await callAI({
+        system: buildSystemPrompt(topic, practiceMode),
+        messages: newMessages,
+        maxTokens: practiceMode === 'feedback' ? 1024 : 512,
+        signal: abortRef.current.signal,
+      });
+      const displayText = processResponse(rawText);
+      setMessages([...newMessages, { role: 'assistant', content: displayText }]);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : String(err));
@@ -241,12 +212,12 @@ export function useEnglishChat() {
       setIsLoading(false);
       abortRef.current = null;
     }
-  }, [messages, callApi, processResponse]);
+  }, [messages, processResponse]);
 
   const summarizeMistakes = useCallback(async (conversationMessages: ChatMessage[]): Promise<string | null> => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Please set your Anthropic API key first.');
+    if (!getCurrentApiKey()) {
+      const provider = getProviderConfig();
+      setError(`Please set your ${provider.label} API key first.`);
       return null;
     }
 
@@ -259,35 +230,14 @@ export function useEnglishChat() {
         .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
         .join('\n\n');
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2048,
-          system: buildSummaryPrompt(),
-          messages: [{ role: 'user', content: `Here is my conversation:\n\n${conversationText}` }],
-        }),
+      const rawText = await callAI({
+        system: buildSummaryPrompt(),
+        messages: [{ role: 'user', content: `Here is my conversation:\n\n${conversationText}` }],
+        maxTokens: 2048,
         signal: abortRef.current.signal,
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(errData?.error?.message || `API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const rawText = data.content?.[0]?.text || null;
-      if (rawText) {
-        const displayText = processResponse(rawText);
-        return displayText;
-      }
-      return null;
+      return processResponse(rawText);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return null;
       setError(err instanceof Error ? err.message : String(err));

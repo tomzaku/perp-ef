@@ -1,19 +1,24 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Question } from '../types/question';
+import { callAI, getCurrentApiKey, getApiKeyForProvider, setApiKeyForProvider, getProvider, getProviderConfig } from '../lib/aiProviders';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-const STORAGE_KEY = 'fe-interview-api-key';
-
+// Legacy exports — kept for compatibility with components that import these
 export function getApiKey(): string {
-  return localStorage.getItem(STORAGE_KEY) || '';
+  return getCurrentApiKey();
 }
 
 export function setApiKey(key: string): void {
-  localStorage.setItem(STORAGE_KEY, key);
+  setApiKeyForProvider(getProvider(), key);
+}
+
+/** Check if the currently selected provider has an API key set */
+export function hasCurrentApiKey(): boolean {
+  return !!getApiKeyForProvider(getProvider());
 }
 
 function buildSystemPrompt(question: Question): string {
@@ -54,9 +59,9 @@ export function useAIChat(question: Question) {
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (userMessage: string) => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Please set your Anthropic API key first.');
+    if (!getCurrentApiKey()) {
+      const provider = getProviderConfig();
+      setError(`Please set your ${provider.label} API key first.`);
       return;
     }
 
@@ -71,36 +76,12 @@ export function useAIChat(question: Question) {
     abortRef.current = new AbortController();
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: buildSystemPrompt(question),
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
+      const assistantMessage = await callAI({
+        system: buildSystemPrompt(question),
+        messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+        maxTokens: 1024,
         signal: abortRef.current.signal,
       });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(
-          errData?.error?.message || `API error: ${response.status}`,
-        );
-      }
-
-      const data = await response.json();
-      const assistantMessage =
-        data.content?.[0]?.text || 'No response received.';
 
       setMessages([
         ...newMessages,
@@ -116,9 +97,9 @@ export function useAIChat(question: Question) {
   }, [messages, question]);
 
   const startInterview = useCallback(async () => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Please set your Anthropic API key first.');
+    if (!getCurrentApiKey()) {
+      const provider = getProviderConfig();
+      setError(`Please set your ${provider.label} API key first.`);
       return;
     }
 
@@ -129,39 +110,17 @@ export function useAIChat(question: Question) {
     abortRef.current = new AbortController();
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: buildSystemPrompt(question),
-          messages: [
-            {
-              role: 'user',
-              content:
-                'Start the interview. Present the problem to me as if we just sat down together.',
-            },
-          ],
-        }),
+      const assistantMessage = await callAI({
+        system: buildSystemPrompt(question),
+        messages: [
+          {
+            role: 'user',
+            content: 'Start the interview. Present the problem to me as if we just sat down together.',
+          },
+        ],
+        maxTokens: 1024,
         signal: abortRef.current.signal,
       });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(
-          errData?.error?.message || `API error: ${response.status}`,
-        );
-      }
-
-      const data = await response.json();
-      const assistantMessage =
-        data.content?.[0]?.text || 'No response received.';
 
       setMessages([{ role: 'assistant', content: assistantMessage }]);
     } catch (err) {

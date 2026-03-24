@@ -4,6 +4,16 @@ import { useState } from 'react';
 import { useVisibleSections } from '../hooks/useVisibleSections';
 import { navItems } from './Sidebar';
 import { ToggleSwitch } from './ToggleSwitch';
+import {
+  AI_PROVIDERS,
+  getProvider,
+  setProvider as setProviderStorage,
+  getModel,
+  setModel as setModelStorage,
+  getApiKeyForProvider,
+  setApiKeyForProvider,
+  type ProviderId,
+} from '../lib/aiProviders';
 
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
 
@@ -51,6 +61,38 @@ export function SettingsPage() {
   const { isVisible, toggle } = useVisibleSections();
   const [previewState, setPreviewState] = useState<{ id: string; phase: 'loading' | 'playing' } | null>(null);
 
+  // AI Provider state
+  const [aiProvider, setAiProvider] = useState<ProviderId>(getProvider);
+  const [aiModel, setAiModel] = useState(getModel);
+  const [aiApiKeyInput, setAiApiKeyInput] = useState('');
+  const [aiApiKeySaved, setAiApiKeySaved] = useState(false);
+  const hasAiKey = !!getApiKeyForProvider(aiProvider);
+
+  const handleProviderChange = (id: ProviderId) => {
+    setAiProvider(id);
+    setProviderStorage(id);
+    const provider = AI_PROVIDERS.find((p) => p.id === id)!;
+    setAiModel(provider.defaultModel);
+    setModelStorage(provider.defaultModel);
+    setAiApiKeyInput('');
+    setAiApiKeySaved(false);
+  };
+
+  const handleModelChange = (model: string) => {
+    setAiModel(model);
+    setModelStorage(model);
+  };
+
+  const handleSaveAiKey = () => {
+    const key = aiApiKeyInput.trim();
+    if (key) {
+      setApiKeyForProvider(aiProvider, key);
+      setAiApiKeyInput('');
+      setAiApiKeySaved(true);
+      setTimeout(() => setAiApiKeySaved(false), 2000);
+    }
+  };
+
   const preview = async (voiceId: string) => {
     stopKokoroAudio();
     setPreviewState({ id: voiceId, phase: 'loading' });
@@ -74,6 +116,115 @@ export function SettingsPage() {
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-display font-bold text-text-primary mb-1">Settings</h1>
       <p className="text-sm text-text-muted mb-8">Configure your preferences.</p>
+
+      {/* AI Provider */}
+      <section className="mb-8">
+        <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+          AI Provider
+        </h2>
+        <p className="text-xs text-text-muted mb-3">
+          Choose which AI provider to use for Mock Interview and English Practice.
+        </p>
+
+        <div className="space-y-2 mb-4">
+          {AI_PROVIDERS.map((p) => {
+            const selected = aiProvider === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => handleProviderChange(p.id)}
+                className={`w-full text-left p-4 rounded-lg border transition-all cursor-pointer ${
+                  selected
+                    ? 'bg-accent-purple/5 border-accent-purple/30 ring-1 ring-accent-purple/20'
+                    : 'bg-bg-card border-border hover:border-text-muted/30'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      selected ? 'border-accent-purple' : 'border-text-muted/40'
+                    }`}
+                  >
+                    {selected && <span className="w-2 h-2 rounded-full bg-accent-purple" />}
+                  </span>
+                  <span className={`text-sm font-medium ${selected ? 'text-accent-purple' : 'text-text-primary'}`}>
+                    {p.label}
+                  </span>
+                  {hasAiKey && selected && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-accent-green/15 text-accent-green">
+                      Key set
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-text-muted ml-7">{p.description}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Model picker */}
+        {(() => {
+          const provider = AI_PROVIDERS.find((p) => p.id === aiProvider)!;
+          return (
+            <div className="mb-4">
+              <label className="text-xs font-medium text-text-secondary block mb-1.5">Model</label>
+              <select
+                value={aiModel}
+                onChange={(e) => handleModelChange(e.target.value)}
+                className="w-full bg-bg-card border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 cursor-pointer"
+              >
+                {provider.models.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
+
+        {/* API Key input */}
+        {(() => {
+          const provider = AI_PROVIDERS.find((p) => p.id === aiProvider)!;
+          return (
+            <div>
+              <label className="text-xs font-medium text-text-secondary block mb-1.5">
+                API Key
+                {hasAiKey && <span className="text-accent-green ml-1.5">(saved)</span>}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={aiApiKeyInput}
+                  onChange={(e) => setAiApiKeyInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveAiKey()}
+                  placeholder={hasAiKey ? '••••••••' : provider.placeholder}
+                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-code focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted"
+                />
+                <button
+                  onClick={handleSaveAiKey}
+                  disabled={!aiApiKeyInput.trim()}
+                  className="px-3 py-2 bg-accent-purple text-bg-primary text-xs font-semibold rounded-lg hover:bg-accent-purple/90 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  {aiApiKeySaved ? 'Saved!' : 'Save'}
+                </button>
+              </div>
+              <p className="text-[11px] text-text-muted mt-1.5">
+                Get your key from{' '}
+                <a
+                  href={provider.keysUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-purple hover:underline"
+                >
+                  {provider.keysLabel}
+                </a>
+                . Stored locally in your browser only.
+              </p>
+            </div>
+          );
+        })()}
+      </section>
 
       {/* Visible Sections */}
       <section className="mb-8">
