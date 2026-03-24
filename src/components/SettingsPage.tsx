@@ -3,6 +3,7 @@ import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
 import { useState } from 'react';
 import { useVisibleSections } from '../hooks/useVisibleSections';
 import { navItems } from './Sidebar';
+import { ToggleSwitch } from './ToggleSwitch';
 
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
 
@@ -46,7 +47,7 @@ const gradeColor: Record<string, string> = {
 const hideableItems = navItems.filter((item) => item.hideable);
 
 export function SettingsPage() {
-  const { engine, setEngine, voice, setVoice, piperVoice, setPiperVoice, speed, setSpeed } = useTtsSettings();
+  const { engine, setEngine, voice, setVoice, piperVoice, setPiperVoice, speed, setSpeed, hoverRepeat, setHoverRepeat } = useTtsSettings();
   const { isVisible, toggle } = useVisibleSections();
   const [previewState, setPreviewState] = useState<{ id: string; phase: 'loading' | 'playing' } | null>(null);
 
@@ -91,13 +92,13 @@ export function SettingsPage() {
                 onClick={() => toggle(item.path)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
                   visible
-                    ? 'bg-accent-green/5 border-accent-green/30'
+                    ? 'bg-accent-cyan/5 border-accent-cyan/30'
                     : 'bg-bg-card border-border hover:border-text-muted/30'
                 }`}
               >
                 <span
                   className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-code font-bold shrink-0 ${
-                    visible ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-tertiary text-text-muted'
+                    visible ? 'bg-accent-cyan/20 text-accent-cyan' : 'bg-bg-tertiary text-text-muted'
                   }`}
                 >
                   {item.icon}
@@ -108,17 +109,7 @@ export function SettingsPage() {
                   </span>
                   <span className="text-[10px] text-text-muted block">{item.desc}</span>
                 </div>
-                <span
-                  className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${
-                    visible ? 'bg-accent-green' : 'bg-bg-tertiary'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                      visible ? 'translate-x-4' : 'translate-x-0.5'
-                    }`}
-                  />
-                </span>
+                <ToggleSwitch checked={visible} />
               </button>
             );
           })}
@@ -194,6 +185,31 @@ export function SettingsPage() {
             {speed.toFixed(1)}x
           </span>
         </div>
+      </section>
+
+      {/* Hover to Repeat */}
+      <section className="mb-8">
+        <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+          Hover to Repeat
+        </h2>
+        <button
+          onClick={() => setHoverRepeat(!hoverRepeat)}
+          className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all cursor-pointer ${
+            hoverRepeat
+              ? 'bg-accent-cyan/5 border-accent-cyan/30'
+              : 'bg-bg-card border-border hover:border-text-muted/30'
+          }`}
+        >
+          <div className="flex-1 text-left min-w-0">
+            <span className={`text-sm font-medium block ${hoverRepeat ? 'text-accent-cyan' : 'text-text-primary'}`}>
+              Hover sentences to hear them
+            </span>
+            <span className="text-xs text-text-muted block mt-0.5">
+              Hover over any sentence in English Practice, conversations, and podcasts to have it read aloud automatically.
+            </span>
+          </div>
+          <ToggleSwitch checked={hoverRepeat} />
+        </button>
       </section>
 
       {/* Voice Picker — shown when Kokoro or Piper is selected */}

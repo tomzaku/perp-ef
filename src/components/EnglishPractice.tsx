@@ -8,6 +8,7 @@ import { speakWithKokoro, stopKokoroAudio, preloadKokoro } from '../lib/kokoroTt
 import { transcribeBlob } from '../lib/whisperStt';
 import { getApiKey } from '../hooks/useAIChat';
 import { useFabStore } from '../hooks/useFabStore';
+import { HoverSentence } from './HoverSentence';
 
 // ─── Web Speech API helpers ──────────────────────────────────────────
 interface SpeechRecognitionInstance extends EventTarget {
@@ -920,14 +921,18 @@ export function EnglishPractice() {
                   >
                     {msg.role === 'assistant' ? (
                       <>
-                        <Markdown content={msg.content} className={maximized ? 'eng-text-lg' : ''} />
+                        <div className={`${maximized ? 'text-lg' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>
+                          <HoverSentence text={msg.content} />
+                        </div>
                         <div className="mt-2 flex justify-end">
                           <ReadAloud text={msg.content} />
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className={`${maximized ? 'text-2xl' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>{msg.content}</div>
+                        <div className={`${maximized ? 'text-2xl' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}>
+                          <HoverSentence text={msg.content} />
+                        </div>
                         {voiceRecordings[i] && (
                           <div className="mt-2 flex justify-end">
                             <button

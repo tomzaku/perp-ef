@@ -3,6 +3,7 @@ import { speakingQuestions, speakingTopics } from '../data/englishSpeaking';
 import { podcasts, podcastTopics } from '../data/englishPodcasts';
 import { ieltsConversations, ieltsTopics, type IeltsConversation } from '../data/englishIelts';
 import { ReadAloud } from './ReadAloud';
+import { HoverSentence } from './HoverSentence';
 import { speakWithKokoro, stopKokoroAudio, preloadKokoro } from '../lib/kokoroTts';
 import { getTtsEngine } from '../hooks/useTtsSettings';
 
@@ -254,7 +255,7 @@ function ConversationTab() {
                           <ReadAloud text={sa.answer} />
                         </div>
                         <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
-                          {sa.answer}
+                          <HoverSentence text={sa.answer} />
                         </p>
                       </div>
                     ))}
@@ -420,7 +421,7 @@ function PodcastTab() {
                   {/* Script text */}
                   <div className="px-5 py-4">
                     <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
-                      {p.script}
+                      <HoverSentence text={p.script} />
                     </p>
                   </div>
 
@@ -802,7 +803,10 @@ function IeltsTab() {
                             {ex.role === 'examiner' ? 'Examiner' : 'Candidate'}
                           </span>
                           <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
-                            {ex.text}
+                            <HoverSentence
+                              text={ex.text}
+                              voice={getTtsEngine() === 'piper' ? IELTS_VOICES[ex.role].piper : IELTS_VOICES[ex.role].kokoro}
+                            />
                           </p>
                         </div>
                         <div className="shrink-0 mt-5">

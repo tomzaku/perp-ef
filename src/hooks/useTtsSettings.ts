@@ -72,6 +72,7 @@ export const PIPER_VOICES: TtsVoice[] = [
 const ENGINE_KEY = 'fe-prep-tts-engine';
 const VOICE_KEY = 'fe-prep-tts-voice';
 const SPEED_KEY = 'fe-prep-tts-speed';
+const HOVER_REPEAT_KEY = 'fe-prep-hover-repeat';
 
 function getStoredEngine(): TtsEngine {
   try {
@@ -107,11 +108,19 @@ function getStoredSpeed(): number {
   return 1;
 }
 
+function getStoredHoverRepeat(): boolean {
+  try {
+    return localStorage.getItem(HOVER_REPEAT_KEY) === 'true';
+  } catch { /* ignore */ }
+  return false;
+}
+
 export function useTtsSettings() {
   const [engine, setEngineState] = useState<TtsEngine>(getStoredEngine);
   const [voice, setVoiceState] = useState<string>(getStoredVoice);
   const [piperVoice, setPiperVoiceState] = useState<string>(getStoredPiperVoice);
   const [speed, setSpeedState] = useState<number>(getStoredSpeed);
+  const [hoverRepeat, setHoverRepeatState] = useState<boolean>(getStoredHoverRepeat);
 
   const setEngine = useCallback((e: TtsEngine) => {
     setEngineState(e);
@@ -133,7 +142,12 @@ export function useTtsSettings() {
     try { localStorage.setItem(SPEED_KEY, String(s)); } catch { /* ignore */ }
   }, []);
 
-  return { engine, setEngine, voice, setVoice, piperVoice, setPiperVoice, speed, setSpeed };
+  const setHoverRepeat = useCallback((v: boolean) => {
+    setHoverRepeatState(v);
+    try { localStorage.setItem(HOVER_REPEAT_KEY, String(v)); } catch { /* ignore */ }
+  }, []);
+
+  return { engine, setEngine, voice, setVoice, piperVoice, setPiperVoice, speed, setSpeed, hoverRepeat, setHoverRepeat };
 }
 
 /** Read-only getters for non-hook contexts */
@@ -151,4 +165,8 @@ export function getPiperVoice(): string {
 
 export function getTtsSpeed(): number {
   return getStoredSpeed();
+}
+
+export function getHoverRepeat(): boolean {
+  return getStoredHoverRepeat();
 }
