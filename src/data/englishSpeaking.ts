@@ -1377,4 +1377,42 @@ export const speakingQuestions: SpeakingQuestion[] = [
       'cut through the noise and focus on what actually matters.',
     ],
   },
+
+  // ── Work & Career — Standup Meeting ─────────────────────
+  {
+    id: 'sp-69',
+    topic: 'Work & Career',
+    question: 'It\'s your daily standup. Share what you did yesterday, what you\'re working on today, and any blockers.',
+    sampleAnswers: [
+      {
+        label: 'Frontend Feature Work',
+        answer:
+          "Yesterday I finished the hover-to-repeat feature for the English practice page. I split the text into sentences so users can click or hover on any sentence to hear it read aloud. I also added a toggle in the settings page. Today I'm going to write unit tests for the sentence splitting logic and fix a small CSS issue with the toggle switch. No blockers at the moment.",
+      },
+      {
+        label: 'Bug Fix & Code Review',
+        answer:
+          "Yesterday I spent most of the day investigating a performance issue on the dashboard page. It turned out we were re-rendering a large list unnecessarily, so I wrapped it in a memo and the load time dropped significantly. I also reviewed two pull requests from the team. Today I'll be picking up the authentication ticket — adding OAuth support for Google login. One blocker: I'm waiting on the API team to share the endpoint documentation. I've already pinged them on Slack.",
+      },
+      {
+        label: 'Backend & DevOps',
+        answer:
+          "Yesterday I deployed the new caching layer to staging and ran some load tests. The results looked good — response times improved by about 40 percent. I also updated the CI pipeline to include the new integration tests. Today I'm planning to promote the caching changes to production and monitor the metrics. The only potential blocker is that we need approval from the team lead before the production deploy, but I've already sent the request.",
+      },
+    ],
+    usefulPhrases: [
+      'Yesterday I finished...',
+      'I spent most of the day...',
+      'It turned out that...',
+      "Today I'm going to...",
+      "Today I'll be picking up...",
+      "Today I'm planning to...",
+      'No blockers at the moment.',
+      "One blocker: I'm waiting on...",
+      'The only potential blocker is...',
+      "I've already pinged them on...",
+      'The results looked good.',
+      'I also reviewed... from the team.',
+    ],
+  },
 ];
