@@ -10,7 +10,7 @@ keyInsights:
   - Monotonic increasing stack finds next greater element
   - Monotonic decreasing stack finds next smaller element
   - Stack can store indices instead of values for richer information
-questionIds: [algo-16, algo-17, algo-18, algo-19]
+questionIds: [algo-16, algo-17, algo-18, algo-19, algo-79, algo-80, algo-81, algo-82, algo-83]
 ---
 
 ## Stack

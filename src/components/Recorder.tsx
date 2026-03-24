@@ -282,7 +282,7 @@ export function Recorder() {
       className={`fixed z-40 transition-all duration-300 ${
         maximized
           ? 'inset-4'
-          : 'bottom-4 right-4 w-[420px] max-h-[85vh]'
+          : 'bottom-4 left-4 right-4 sm:left-auto sm:w-[420px] max-h-[85vh]'
       } bg-bg-primary border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden`}
     >
       {/* Header */}

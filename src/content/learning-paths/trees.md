@@ -10,7 +10,7 @@ keyInsights:
   - "Postorder is natural for bottom-up computation (height, diameter)"
   - BFS naturally gives level-order traversal
   - "Most tree problems reduce to: what do I need from left/right subtrees?"
-questionIds: [algo-27, algo-28, algo-29, algo-30]
+questionIds: [algo-27, algo-28, algo-29, algo-30, algo-84, algo-85, algo-86, algo-87, algo-88]
 ---
 
 ## Trees

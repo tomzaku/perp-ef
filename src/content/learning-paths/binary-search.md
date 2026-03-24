@@ -10,7 +10,7 @@ keyInsights:
   - Use Math.floor((left + right) / 2) to avoid overflow
   - "Binary search on answer: guess a value, check if feasible"
   - "For rotated arrays, at least one half is always sorted"
-questionIds: [algo-20, algo-21, algo-22]
+questionIds: [algo-20, algo-21, algo-22, algo-69, algo-70, algo-71, algo-72, algo-73]
 ---
 
 ## Binary Search

@@ -16,6 +16,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
 import { Recorder } from './components/Recorder';
+import { ReadAloudPanel } from './components/ReadAloudPanel';
 import { Timer } from './components/Timer';
 import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
 import { ProfilePage } from './components/ProfilePage';
@@ -305,6 +306,7 @@ function App() {
       <FabMenu />
       <EnglishPractice />
       <Recorder />
+      <ReadAloudPanel />
       <Timer />
     </div>
     </ThemeContext>

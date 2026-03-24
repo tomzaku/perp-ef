@@ -6,6 +6,7 @@ import { CodeBlock } from './CodeBlock';
 import { DifficultyBadge } from './DifficultyBadge';
 import { Markdown } from './Markdown';
 import { AskChatGpt } from './AskChatGpt';
+import { ReadAloud } from './ReadAloud';
 
 interface LearningPathViewProps {
   paths: LearningPathCategory[];
@@ -165,9 +166,12 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
           {/* ELI5 */}
           {path.eli5 && (
             <section className="mb-8">
-              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-                Explain Like I'm 5
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider">
+                  Explain Like I'm 5
+                </h2>
+                <ReadAloud text={path.eli5} />
+              </div>
               <div className="bg-accent-green/5 border border-accent-green/20 rounded-lg p-5">
                 <Markdown content={path.eli5} />
               </div>
@@ -177,9 +181,12 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
           {/* Deep Dive Article */}
           {path.article && (
             <section className="mb-8">
-              <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-                Deep Dive
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider">
+                  Deep Dive
+                </h2>
+                <ReadAloud text={path.article} />
+              </div>
               <div className="bg-bg-card border border-border rounded-lg p-5">
                 <Markdown content={path.article} />
               </div>
@@ -190,9 +197,12 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
           {path.poem && (
             <section className="mb-8">
               <div className="bg-accent-cyan/5 border border-accent-cyan/20 rounded-lg p-5">
-                <h2 className="text-xs font-display font-bold text-accent-cyan uppercase tracking-wider mb-3">
-                  A Poem to Remember
-                </h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xs font-display font-bold text-accent-cyan uppercase tracking-wider">
+                    A Poem to Remember
+                  </h2>
+                  <ReadAloud text={path.poem} />
+                </div>
                 <pre className="text-sm text-text-secondary leading-relaxed font-body whitespace-pre-wrap italic">
                   {path.poem}
                 </pre>

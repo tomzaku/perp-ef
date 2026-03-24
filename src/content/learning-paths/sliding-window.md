@@ -10,7 +10,7 @@ keyInsights:
   - "Variable window: expand right, shrink left when constraint breaks"
   - Use a hash map to track character/element frequencies in the window
   - The answer is often recorded when the window is valid before shrinking
-questionIds: [algo-13, algo-14, algo-15, algo-62, algo-63, algo-64, algo-65, algo-66, algo-67, algo-68]
+questionIds: [algo-13, algo-14, algo-15, algo-62, algo-63, algo-64, algo-65, algo-66, algo-67, algo-68, algo-74, algo-75, algo-76, algo-77, algo-78]
 ---
 
 ## Sliding Window
