@@ -48,7 +48,7 @@ function isSafari(): boolean {
   return /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
 }
 
-let kokoroUnavailable = isSafari() || lowPower;
+let kokoroUnavailable = isSafari();
 let ttsInstance: KokoroTTSInstance | null = null;
 let ttsPromise: Promise<KokoroTTSInstance> | null = null;
 
@@ -110,13 +110,18 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
 }
 
 export function preloadKokoro() {
+  // Skip preloading on mobile/low-power devices — use native TTS instead
+  if (lowPower) {
+    log('low-power device detected, skipping AI model preload');
+    return;
+  }
   const engine = getTtsEngine();
   if (engine === 'piper') {
     preloadPiper();
     return;
   }
   if (engine !== 'kokoro') return;
-  if (kokoroUnavailable) return; // includes lowPower devices — skip heavy Kokoro model
+  if (kokoroUnavailable) return;
   sessionStart = performance.now();
   log('preloading model...');
   getKokoroTTS().catch((err) => {
