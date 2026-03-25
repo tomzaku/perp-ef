@@ -13,6 +13,25 @@ type PiperTTSModule = {
 const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 const TAG = '[tts]';
 
+/** Max characters to send to TTS — prevents processing huge sections */
+const MAX_TTS_CHARS = 5000;
+
+/** Detect low-power devices that can't handle AI models in the browser */
+function isLowPowerDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  // Android, iPhone, iPad, or any mobile device
+  if (/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua)) return true;
+  // Low memory (< 4GB) — navigator.deviceMemory is available in Chrome/Edge
+  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory;
+  if (typeof mem === 'number' && mem < 4) return true;
+  // Low core count
+  if (typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 2) return true;
+  return false;
+}
+
+const lowPower = isLowPowerDevice();
+
 let sessionStart = 0;
 function elapsed(): string {
   return `+${((performance.now() - sessionStart) / 1000).toFixed(2)}s`;
@@ -86,6 +105,11 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
 }
 
 export function preloadKokoro() {
+  // Skip preloading on mobile/low-power devices — use native TTS instead
+  if (lowPower) {
+    log('low-power device detected, skipping AI model preload');
+    return;
+  }
   const engine = getTtsEngine();
   if (engine === 'piper') {
     preloadPiper();
@@ -290,10 +314,31 @@ export async function speakWithKokoro(
   cancelled = false;
   sessionStart = performance.now();
 
-  const clean = cleanMarkdown(text);
+  let clean = cleanMarkdown(text);
   if (!clean) return;
 
+  // Truncate very long content to avoid overwhelming TTS
+  if (clean.length > MAX_TTS_CHARS) {
+    log(`text too long (${clean.length} chars), truncating to ${MAX_TTS_CHARS}`);
+    // Cut at sentence boundary near the limit
+    const truncated = clean.slice(0, MAX_TTS_CHARS);
+    const lastSentence = truncated.lastIndexOf('. ');
+    clean = lastSentence > MAX_TTS_CHARS * 0.5
+      ? truncated.slice(0, lastSentence + 1)
+      : truncated;
+  }
+
   const engine = getTtsEngine();
+
+  // On mobile/low-power devices, always use native TTS regardless of setting
+  if (lowPower && engine !== 'native') {
+    log(`low-power device: forcing native TTS (requested=${engine}), text length: ${clean.length}`);
+    options?.onStart?.();
+    await speakNative(clean, options);
+    log('done');
+    return;
+  }
+
   log(`speak requested (engine=${engine}), text length: ${clean.length}`);
 
   if (engine === 'native') {
