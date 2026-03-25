@@ -11,7 +11,7 @@ import { Sidebar } from './components/Sidebar';
 import { StudyPlanView } from './components/StudyPlanView';
 import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
-import { PathList, PathDetail } from './components/LearningPathView';
+import { PathList, PathDetail, SectionDetail } from './components/LearningPathView';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
@@ -283,6 +283,19 @@ function App() {
                 isCompleted={isCompleted}
                 basePath="/backend"
                 title="Backend Learning Paths"
+                subtitle=""
+              />
+            }
+          />
+          <Route
+            path="/backend/path/:slug/section/:sectionSlug"
+            element={
+              <SectionDetail
+                paths={backendPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/backend"
+                title=""
                 subtitle=""
               />
             }

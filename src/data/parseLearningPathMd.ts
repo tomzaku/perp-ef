@@ -1,5 +1,30 @@
-import type { LearningPathCategory } from '../types/question.ts';
+import type { LearningPathCategory, ArticleSection } from '../types/question.ts';
 import { parseFrontmatter } from './parseFrontmatter.ts';
+
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+/** Extract ### subsections from article text */
+function extractSections(article: string): ArticleSection[] {
+  const sections: ArticleSection[] = [];
+  const regex = /^### (.+)$/gm;
+  const matches: { title: string; idx: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(article)) !== null) {
+    matches.push({ title: m[1].trim(), idx: m.index });
+  }
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i].idx + article.slice(matches[i].idx).indexOf('\n') + 1;
+    const end = i + 1 < matches.length ? matches[i + 1].idx : article.length;
+    sections.push({
+      slug: slugify(matches[i].title),
+      title: matches[i].title,
+      content: article.slice(start, end).trim(),
+    });
+  }
+  return sections;
+}
 
 export function parseLearningPathMd(raw: string): LearningPathCategory {
   const { frontmatter: fm, body } = parseFrontmatter(raw);
@@ -44,6 +69,8 @@ export function parseLearningPathMd(raw: string): LearningPathCategory {
     }
   }
 
+  const sections = extractSections(article);
+
   return {
     slug: fm.slug as string,
     title: fm.title as string,
@@ -57,5 +84,6 @@ export function parseLearningPathMd(raw: string): LearningPathCategory {
     keyInsights: (fm.keyInsights as string[]) ?? [],
     template,
     questionIds: (fm.questionIds as string[]) ?? [],
+    sections,
   };
 }

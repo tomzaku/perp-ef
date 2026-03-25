@@ -149,6 +149,27 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
         </div>
       </div>
 
+      {/* Sections grid - quick links to dedicated section pages */}
+      {path.sections.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+            Sections ({path.sections.length})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {path.sections.map((s, i) => (
+              <Link
+                key={s.slug}
+                to={`${basePath}/path/${path.slug}/section/${s.slug}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-bg-card hover:border-accent-cyan/30 hover:bg-bg-hover transition-all text-sm text-text-primary group"
+              >
+                <span className="text-xs font-code text-text-muted w-5 text-right shrink-0">{i + 1}.</span>
+                <span className="truncate group-hover:text-accent-cyan transition-colors">{s.title}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Two-column layout: Content + Sub-domain sidebar */}
       <div className="flex gap-6">
         {/* Main Content */}
@@ -467,4 +488,186 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
   );
 }
 
-export { PathList, PathDetail };
+function SectionDetail({ paths, questions, isCompleted, basePath }: LearningPathViewProps) {
+  const { slug, sectionSlug } = useParams<{ slug: string; sectionSlug: string }>();
+  const path = paths.find((p) => p.slug === slug);
+
+  if (!path) {
+    return (
+      <div className="text-center py-16 text-text-muted">
+        <p>Path not found</p>
+        <Link to={basePath} className="text-accent-cyan hover:underline text-sm mt-2 block">
+          Back to paths
+        </Link>
+      </div>
+    );
+  }
+
+  const section = path.sections.find((s) => s.slug === sectionSlug);
+  const sectionIdx = path.sections.findIndex((s) => s.slug === sectionSlug);
+  const prevSection = sectionIdx > 0 ? path.sections[sectionIdx - 1] : null;
+  const nextSection = sectionIdx < path.sections.length - 1 ? path.sections[sectionIdx + 1] : null;
+
+  if (!section) {
+    return (
+      <div className="text-center py-16 text-text-muted">
+        <p>Section not found</p>
+        <Link to={`${basePath}/path/${slug}`} className="text-accent-cyan hover:underline text-sm mt-2 block">
+          Back to {path.title}
+        </Link>
+      </div>
+    );
+  }
+
+  // Find questions whose subcategory matches this section title (fuzzy: check if either contains the other)
+  const sectionQuestions = path.questionIds
+    .map((id) => questions.find((q) => q.id === id))
+    .filter(Boolean)
+    .filter((q) => {
+      const sub = (q as Question).subcategory.toLowerCase();
+      const title = section.title.toLowerCase();
+      return sub === title || title.includes(sub) || sub.includes(title.split('&')[0].trim());
+    }) as Question[];
+
+  return (
+    <div className="max-w-4xl animate-fade-in">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-text-secondary mb-6 flex-wrap">
+        <Link to={basePath} className="hover:text-accent-cyan transition-colors">
+          All Paths
+        </Link>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0">
+          <path d="M6 4L10 8L6 12" />
+        </svg>
+        <Link to={`${basePath}/path/${slug}`} className="hover:text-accent-cyan transition-colors">
+          {path.title}
+        </Link>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0">
+          <path d="M6 4L10 8L6 12" />
+        </svg>
+        <span className="text-text-primary font-medium">{section.title}</span>
+      </div>
+
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-12 h-12 rounded-lg bg-accent-cyan/10 text-accent-cyan flex items-center justify-center font-code font-bold text-lg">
+            {path.icon}
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-text-primary">
+              {section.title}
+            </h1>
+            <p className="text-xs text-text-muted">
+              Section {sectionIdx + 1} of {path.sections.length} in {path.title}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Section content */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider">
+            Deep Dive
+          </h2>
+          <ReadAloud text={section.content} />
+        </div>
+        <div className="bg-bg-card border border-border rounded-lg p-5">
+          <Markdown content={section.content} />
+        </div>
+      </section>
+
+      {/* Related Practice Problems */}
+      {sectionQuestions.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+            Practice Problems ({sectionQuestions.length})
+          </h2>
+          <div className="space-y-2">
+            {sectionQuestions.map((q, i) => {
+              const done = isCompleted(q.id);
+              return (
+                <Link
+                  key={q.id}
+                  to={`/question/${q.id}`}
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all hover:border-accent-cyan/30 ${
+                    done ? 'border-easy/20 bg-easy/[0.03]' : 'border-border bg-bg-card hover:bg-bg-hover'
+                  }`}
+                >
+                  <span className="text-xs font-code text-text-muted w-6 text-right">
+                    {i + 1}.
+                  </span>
+                  <span
+                    className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 text-[10px] ${
+                      done ? 'border-easy bg-easy/20 text-easy' : 'border-border-light'
+                    }`}
+                  >
+                    {done && '✓'}
+                  </span>
+                  <span className={`flex-1 text-sm truncate ${done ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
+                    {q.title}
+                  </span>
+                  <DifficultyBadge difficulty={q.difficulty} />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* All Sections Navigator */}
+      <section className="mb-8">
+        <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+          All Sections
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {path.sections.map((s, i) => (
+            <Link
+              key={s.slug}
+              to={`${basePath}/path/${slug}/section/${s.slug}`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm transition-all ${
+                s.slug === sectionSlug
+                  ? 'border-accent-cyan bg-accent-cyan/10 text-accent-cyan font-medium'
+                  : 'border-border bg-bg-card hover:border-accent-cyan/30 hover:bg-bg-hover text-text-primary'
+              }`}
+            >
+              <span className="text-xs font-code text-text-muted w-5 text-right shrink-0">{i + 1}.</span>
+              <span className="truncate">{s.title}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Prev / Next navigation */}
+      <div className="flex items-center justify-between gap-4 pt-6 border-t border-border">
+        {prevSection ? (
+          <Link
+            to={`${basePath}/path/${slug}/section/${prevSection.slug}`}
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent-cyan transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M10 12L6 8L10 4" />
+            </svg>
+            <span className="truncate max-w-[200px]">{prevSection.title}</span>
+          </Link>
+        ) : <div />}
+        {nextSection ? (
+          <Link
+            to={`${basePath}/path/${slug}/section/${nextSection.slug}`}
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent-cyan transition-colors"
+          >
+            <span className="truncate max-w-[200px]">{nextSection.title}</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M6 4L10 8L6 12" />
+            </svg>
+          </Link>
+        ) : <div />}
+      </div>
+
+      <AskChatGpt title={section.title} description={section.content.slice(0, 300)} />
+    </div>
+  );
+}
+
+export { PathList, PathDetail, SectionDetail };

@@ -87,6 +87,12 @@ export interface SavedConversation {
   updatedAt: number;
 }
 
+export interface ArticleSection {
+  slug: string;
+  title: string;
+  content: string;
+}
+
 export interface LearningPathCategory {
   slug: string;
   title: string;
@@ -100,4 +106,5 @@ export interface LearningPathCategory {
   keyInsights: string[];
   template: string;
   questionIds: string[];
+  sections: ArticleSection[];
 }
