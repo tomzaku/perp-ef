@@ -463,6 +463,11 @@ export function SettingsPage() {
         </section>
         );
       })()}
+
+      {/* Version */}
+      <p className="text-xs text-text-muted/50 text-center mt-12 mb-4">
+        v{__APP_VERSION__}
+      </p>
     </div>
   );
 }
