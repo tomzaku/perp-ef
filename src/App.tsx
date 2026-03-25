@@ -20,6 +20,7 @@ import { ReadAloudPanel } from './components/ReadAloudPanel';
 import { Timer } from './components/Timer';
 import { EnglishSpeakingPage } from './components/EnglishSpeakingPage';
 import { ProfilePage } from './components/ProfilePage';
+import { Toaster } from 'react-hot-toast';
 import { useVisibleSections } from './hooks/useVisibleSections';
 
 function QuestionPage() {
@@ -334,6 +335,17 @@ function App() {
       <Recorder />
       <ReadAloudPanel />
       <Timer />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: 'var(--color-bg-card)',
+            color: 'var(--color-text-primary)',
+            border: '1px solid var(--color-border)',
+            fontSize: '13px',
+          },
+        }}
+      />
     </div>
     </ThemeContext>
     </AuthProvider>

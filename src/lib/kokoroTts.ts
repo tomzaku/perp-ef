@@ -1,5 +1,6 @@
 import { cleanMarkdown } from './cleanMarkdown';
 import { getTtsEngine, getTtsVoice, getTtsSpeed, getPiperVoice, PIPER_VOICES } from '../hooks/useTtsSettings';
+import toast from 'react-hot-toast';
 
 type KokoroTTSInstance = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,6 +78,7 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
   const dtype = useGPU ? 'fp32' : 'q8';
 
   log(`starting model download... device=${device} dtype=${dtype}`);
+  const loadingToast = toast.loading('Loading Kokoro AI voice model...', { id: 'tts-loading' });
 
   ttsPromise = import('kokoro-js').then(async ({ KokoroTTS }) => {
     const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
@@ -89,15 +91,18 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
           log(`✓ done: ${p.file}`);
         } else if (typeof p.progress === 'number' && p.progress > 0 && p.progress % 10 < 1) {
           log(`⬇ ${p.file} — ${p.progress.toFixed(0)}%`);
+          toast.loading(`Loading Kokoro AI... ${p.progress.toFixed(0)}%`, { id: 'tts-loading' });
         }
       },
     });
     ttsInstance = tts as unknown as KokoroTTSInstance;
     log('model ready');
+    toast.success('Kokoro AI voice model ready', { id: 'tts-loading', duration: 2000 });
     return ttsInstance;
   }).catch((err) => {
     ttsPromise = null;
     kokoroUnavailable = true;
+    toast.error('Kokoro AI failed to load', { id: 'tts-loading', duration: 3000 });
     throw err;
   });
 
@@ -129,12 +134,15 @@ async function getPiperTTS(): Promise<PiperTTSModule> {
   if (piperPromise) return piperPromise;
 
   log('loading Piper TTS module...');
+  toast.loading('Loading Piper AI voice model...', { id: 'tts-loading' });
   piperPromise = import('@mintplex-labs/piper-tts-web').then((mod) => {
     piperModule = mod as unknown as PiperTTSModule;
     log('Piper TTS module ready');
+    toast.success('Piper AI voice model ready', { id: 'tts-loading', duration: 2000 });
     return piperModule;
   }).catch((err) => {
     piperPromise = null;
+    toast.error('Piper AI failed to load', { id: 'tts-loading', duration: 3000 });
     throw err;
   });
 
@@ -154,40 +162,54 @@ async function speakPiper(
   text: string,
   options?: { voice?: string; onStart?: () => void; onEnd?: () => void },
 ): Promise<void> {
+  const t0 = performance.now();
+  const perf = (label: string) => console.log(`${TAG} [perf:piper] ${label}: ${(performance.now() - t0).toFixed(0)}ms`);
+
+  perf('start');
   const piper = await getPiperTTS();
+  perf('getPiperTTS() module loaded');
   if (cancelled) return;
 
   const chunks = splitIntoChunks(text);
-  log(`piper: split into ${chunks.length} chunks`);
+  perf(`splitIntoChunks → ${chunks.length} chunks`);
 
   const rawVoice = options?.voice ?? getPiperVoice();
-  // Validate voice ID exists in Piper's voice list (Kokoro voice IDs are not compatible)
   const voiceId = PIPER_VOICES.some((v) => v.id === rawVoice) ? rawVoice : getPiperVoice();
+  perf(`voice resolved: ${voiceId}`);
 
   // Generate first chunk
-  log(`piper chunk 0: generating...`);
+  perf(`chunk 0: calling predict (${chunks[0].length} chars)...`);
   let nextBlob: Blob | null = await piper.predict({ text: chunks[0], voiceId });
+  perf(`chunk 0: predict returned (${nextBlob ? (nextBlob.size / 1024).toFixed(0) + 'KB' : 'null'})`);
   if (!nextBlob || cancelled) { options?.onEnd?.(); return; }
 
   options?.onStart?.();
+  perf('onStart fired');
 
   for (let i = 0; i < chunks.length; i++) {
-    if (cancelled) { log('cancelled'); break; }
+    if (cancelled) { perf('cancelled'); break; }
 
     const currentBlob = nextBlob!;
 
     // Pre-generate next chunk in parallel with playback
     const nextPromise = (i + 1 < chunks.length)
-      ? piper.predict({ text: chunks[i + 1], voiceId }).catch(() => null)
+      ? (() => {
+          perf(`chunk ${i + 1}: calling predict (${chunks[i + 1].length} chars)...`);
+          return piper.predict({ text: chunks[i + 1], voiceId }).then(b => {
+            perf(`chunk ${i + 1}: predict returned (${b ? (b.size / 1024).toFixed(0) + 'KB' : 'null'})`);
+            return b;
+          }).catch(() => null);
+        })()
       : Promise.resolve(null);
 
-    log(`piper chunk ${i}: playing...`);
+    perf(`chunk ${i}: playing (${(currentBlob.size / 1024).toFixed(0)}KB)...`);
     await playBlob(currentBlob);
-    log(`piper chunk ${i}: done`);
+    perf(`chunk ${i}: playback done`);
 
     nextBlob = await nextPromise;
     if (!nextBlob && i + 1 < chunks.length) break;
   }
+  perf('all chunks done');
 }
 
 // ─── Native browser TTS ────────────────────────────────────────────
@@ -266,8 +288,10 @@ export function isKokoroPlaying(): boolean {
 
 /**
  * Split text into chunks that Kokoro can handle without truncation.
- * Splits on paragraph breaks first, then on sentence boundaries if still too long.
+ * First chunk is kept small (~120 chars) for fast time-to-first-audio.
+ * Subsequent chunks are up to 300 chars.
  */
+const FIRST_CHUNK_CHARS = 120;
 const MAX_CHUNK_CHARS = 300;
 
 function splitIntoChunks(text: string): string[] {
@@ -276,7 +300,8 @@ function splitIntoChunks(text: string): string[] {
 
   const chunks: string[] = [];
   for (const para of paragraphs) {
-    if (para.length <= MAX_CHUNK_CHARS) {
+    const limit = chunks.length === 0 ? FIRST_CHUNK_CHARS : MAX_CHUNK_CHARS;
+    if (para.length <= limit) {
       chunks.push(para);
       continue;
     }
@@ -284,7 +309,8 @@ function splitIntoChunks(text: string): string[] {
     const sentences = para.match(/[^.!?]+[.!?]+\s*/g) || [para];
     let current = '';
     for (const sentence of sentences) {
-      if (current.length + sentence.length > MAX_CHUNK_CHARS && current) {
+      const curLimit = chunks.length === 0 && current === '' ? FIRST_CHUNK_CHARS : MAX_CHUNK_CHARS;
+      if (current.length + sentence.length > curLimit && current) {
         chunks.push(current.trim());
         current = '';
       }
@@ -305,47 +331,55 @@ export async function speakWithKokoro(
     onEnd?: () => void;
   },
 ): Promise<void> {
+  const t0 = performance.now();
+  const perf = (label: string) => console.log(`${TAG} [perf] ${label}: ${(performance.now() - t0).toFixed(0)}ms`);
+
   stopKokoroAudio();
   cancelled = false;
   sessionStart = performance.now();
+  perf('start');
 
   let clean = cleanMarkdown(text);
   if (!clean) return;
+  perf(`cleanMarkdown (${text.length} → ${clean.length} chars)`);
 
   // Truncate very long content to avoid overwhelming TTS
   if (clean.length > MAX_TTS_CHARS) {
     log(`text too long (${clean.length} chars), truncating to ${MAX_TTS_CHARS}`);
-    // Cut at sentence boundary near the limit
     const truncated = clean.slice(0, MAX_TTS_CHARS);
     const lastSentence = truncated.lastIndexOf('. ');
     clean = lastSentence > MAX_TTS_CHARS * 0.5
       ? truncated.slice(0, lastSentence + 1)
       : truncated;
+    perf(`truncated to ${clean.length} chars`);
   }
 
   const engine = getTtsEngine();
-  log(`speak requested (engine=${engine}), text length: ${clean.length}`);
+  perf(`engine resolved: ${engine}`);
 
   if (engine === 'native') {
     options?.onStart?.();
+    perf('native: starting');
     await speakNative(clean, options);
-    log('done');
+    perf('native: done');
     return;
   }
 
   if (engine === 'piper' || (kokoroUnavailable && engine === 'kokoro')) {
     if (kokoroUnavailable && engine === 'kokoro') {
-      log('kokoro unavailable on this browser, falling back to Piper TTS');
+      perf('kokoro unavailable, falling back to piper');
     }
     try {
+      perf('piper: calling speakPiper...');
       await speakPiper(clean, options);
-      log('done');
+      perf('piper: done');
       options?.onEnd?.();
     } catch (err) {
+      perf(`piper: FAILED — ${err}`);
       console.warn(TAG, 'Piper failed, falling back to native TTS:', err);
       options?.onStart?.();
       await speakNative(clean, options);
-      log('done');
+      perf('native fallback: done');
     }
     return;
   }
@@ -353,56 +387,59 @@ export async function speakWithKokoro(
   // Kokoro engine — split into chunks, pre-generate next while current plays
   let tts: KokoroTTSInstance;
   try {
+    perf('kokoro: loading model...');
     tts = await getKokoroTTS();
+    perf('kokoro: model ready');
   } catch {
-    log('kokoro failed to load, falling back to native TTS');
+    perf('kokoro: FAILED to load');
     options?.onStart?.();
     await speakNative(clean, options);
-    log('done');
+    perf('native fallback: done');
     return;
   }
   if (cancelled) return;
 
   const chunks = splitIntoChunks(clean);
-  log(`split into ${chunks.length} chunks`);
+  perf(`kokoro: ${chunks.length} chunks`);
 
   const voice = (options?.voice ?? getTtsVoice()) as 'af_heart';
   const speed = options?.speed ?? getTtsSpeed();
 
-  // Generate a chunk and return its blob
   const generateChunk = async (i: number): Promise<Blob | null> => {
     if (cancelled || i >= chunks.length) return null;
-    log(`chunk ${i}/${chunks.length}: generating (${chunks[i].length} chars)...`);
+    perf(`kokoro chunk ${i}: generating (${chunks[i].length} chars)...`);
     const result = await tts.generate(chunks[i], { voice, speed });
     if (cancelled) return null;
     const blob = result.toBlob();
-    log(`chunk ${i}: generated — ${(blob.size / 1024).toFixed(0)} KB`);
+    perf(`kokoro chunk ${i}: generated (${(blob.size / 1024).toFixed(0)}KB)`);
     return blob;
   };
 
-  // Generate first chunk
-  let nextBlob = await generateChunk(0);
-  if (!nextBlob || cancelled) { options?.onEnd?.(); return; }
+  // Generate first chunk (small — ~120 chars for fast start)
+  let currentBlob = await generateChunk(0);
+  if (!currentBlob || cancelled) { options?.onEnd?.(); return; }
 
   options?.onStart?.();
+  perf('kokoro: onStart fired');
 
+  // Only pre-generate 1 chunk ahead — start next generation immediately,
+  // then play current chunk. By the time playback finishes (~15-20s),
+  // the next chunk (~2s generation) is already waiting.
   for (let i = 0; i < chunks.length; i++) {
-    if (cancelled) { log('cancelled'); break; }
+    if (cancelled) { perf('kokoro: cancelled'); break; }
 
-    const currentBlob = nextBlob!;
+    // Kick off next chunk generation (if any) BEFORE playing current
+    const nextPromise = (i + 1 < chunks.length) ? generateChunk(i + 1) : null;
 
-    // Start generating next chunk in parallel with playback
-    const nextPromise = (i + 1 < chunks.length) ? generateChunk(i + 1) : Promise.resolve(null);
+    perf(`kokoro chunk ${i}: playing (${(currentBlob!.size / 1024).toFixed(0)}KB)...`);
+    await playBlob(currentBlob!);
+    perf(`kokoro chunk ${i}: playback done`);
 
-    log(`chunk ${i}: playing...`);
-    await playBlob(currentBlob);
-    log(`chunk ${i}: playback done`);
-
-    // Wait for next chunk to be ready (may already be done)
-    nextBlob = await nextPromise;
-    if (!nextBlob && i + 1 < chunks.length) break; // generation failed
+    if (!nextPromise) break;
+    currentBlob = await nextPromise;
+    if (!currentBlob || cancelled) break;
   }
 
-  log('done');
+  perf('kokoro: all done');
   options?.onEnd?.();
 }
