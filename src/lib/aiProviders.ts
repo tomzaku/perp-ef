@@ -11,6 +11,7 @@ export interface AIProvider {
   keysLabel: string;
   defaultModel: string;
   models: { id: string; label: string }[];
+  badge?: string;
 }
 
 export const AI_PROVIDERS: AIProvider[] = [
@@ -61,6 +62,7 @@ export const AI_PROVIDERS: AIProvider[] = [
     id: 'google',
     label: 'Google AI',
     description: 'Gemini models — multimodal with large context.',
+    badge: 'Free tier',
     placeholder: 'AIza...',
     keysUrl: 'https://aistudio.google.com/apikey',
     keysLabel: 'aistudio.google.com',

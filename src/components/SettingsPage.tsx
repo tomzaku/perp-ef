@@ -150,6 +150,17 @@ export function SettingsPage() {
                   <span className={`text-sm font-medium ${selected ? 'text-accent-purple' : 'text-text-primary'}`}>
                     {p.label}
                   </span>
+                  {p.badge && (
+                    <a
+                      href={p.keysUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-accent-cyan/15 text-accent-cyan hover:bg-accent-cyan/25 transition-colors"
+                    >
+                      {p.badge}
+                    </a>
+                  )}
                   {hasAiKey && selected && (
                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-accent-green/15 text-accent-green">
                       Key set
