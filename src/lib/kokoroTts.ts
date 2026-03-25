@@ -6,7 +6,17 @@ type KokoroTTSInstance = {
   generate(text: string, options: { voice: any; speed: number }): Promise<{ toBlob(): Blob }>;
 };
 
+type PiperTTSSession = {
+  voiceId: string;
+  predict(text: string): Promise<Blob>;
+};
+
 type PiperTTSModule = {
+  TtsSession: {
+    new (options: { voiceId: string; progress?: (p: { url: string; total: number; loaded: number }) => void }): PiperTTSSession;
+    _instance: PiperTTSSession | null;
+    create(options: { voiceId: string }): Promise<PiperTTSSession>;
+  };
   predict(config: { text: string; voiceId: string }): Promise<Blob>;
 };
 
@@ -153,6 +163,9 @@ export function preloadPiper() {
   });
 }
 
+/** Last voice loaded in Piper session — if changed, must destroy singleton */
+let lastPiperVoice: string | null = null;
+
 async function speakPiper(
   text: string,
   options?: { voice?: string; onStart?: () => void; onEnd?: () => void },
@@ -166,6 +179,14 @@ async function speakPiper(
   const rawVoice = options?.voice ?? getPiperVoice();
   // Validate voice ID exists in Piper's voice list (Kokoro voice IDs are not compatible)
   const voiceId = PIPER_VOICES.some((v) => v.id === rawVoice) ? rawVoice : getPiperVoice();
+
+  // Piper TtsSession is a singleton that bakes the voice model on first init.
+  // If the voice changed, destroy the singleton so a new model is loaded.
+  if (lastPiperVoice && lastPiperVoice !== voiceId && piper.TtsSession?._instance) {
+    log(`piper: voice changed (${lastPiperVoice} → ${voiceId}), resetting session`);
+    piper.TtsSession._instance = null;
+  }
+  lastPiperVoice = voiceId;
 
   // Generate first chunk
   log(`piper chunk 0: generating...`);
