@@ -149,28 +149,7 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
         </div>
       </div>
 
-      {/* Sections grid - quick links to dedicated section pages */}
-      {path.sections.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-            Sections ({path.sections.length})
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {path.sections.map((s, i) => (
-              <Link
-                key={s.slug}
-                to={`${basePath}/path/${path.slug}/section/${s.slug}`}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-bg-card hover:border-accent-cyan/30 hover:bg-bg-hover transition-all text-sm text-text-primary group"
-              >
-                <span className="text-xs font-code text-text-muted w-5 text-right shrink-0">{i + 1}.</span>
-                <span className="truncate group-hover:text-accent-cyan transition-colors">{s.title}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Two-column layout: Content + Sub-domain sidebar */}
+      {/* Two-column layout: Content + Sections sidebar */}
       <div className="flex gap-6">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
@@ -301,35 +280,20 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
               )}
             </div>
 
-            {/* Sub-domain pills (mobile - shown above questions) */}
-            <div className="flex flex-wrap gap-2 mb-4 lg:hidden">
-              <button
-                onClick={() => setActiveSubDomain(null)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                  !activeSubDomain
-                    ? 'border-accent-cyan bg-accent-cyan/10 text-accent-cyan'
-                    : 'border-border text-text-secondary hover:border-accent-cyan/30'
-                }`}
-              >
-                All ({pathQuestions.length})
-              </button>
-              {subDomains.map((sd) => {
-                const completedCount = sd.questions.filter((q) => isCompleted(q.id)).length;
-                return (
-                  <button
-                    key={sd.name}
-                    onClick={() => setActiveSubDomain(activeSubDomain === sd.name ? null : sd.name)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                      activeSubDomain === sd.name
-                        ? 'border-accent-cyan bg-accent-cyan/10 text-accent-cyan'
-                        : 'border-border text-text-secondary hover:border-accent-cyan/30'
-                    }`}
+            {/* Section links (mobile - shown above questions) */}
+            {path.sections.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4 lg:hidden">
+                {path.sections.map((s) => (
+                  <Link
+                    key={s.slug}
+                    to={`${basePath}/path/${path.slug}/section/${s.slug}`}
+                    className="text-xs px-3 py-1.5 rounded-full border border-border text-text-secondary hover:border-accent-cyan/30 hover:text-accent-cyan transition-all"
                   >
-                    {sd.name} ({completedCount}/{sd.questions.length})
-                  </button>
-                );
-              })}
-            </div>
+                    {s.title}
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {activeSubDomain ? (
               /* Filtered: flat list */
@@ -429,58 +393,30 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
           </section>
         </div>
 
-        {/* Right Sidebar - Sub-domain Navigation (desktop only) */}
-        <aside className="hidden lg:block w-56 shrink-0">
-          <div className="sticky top-8">
-            <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-              Sub-domains
-            </h3>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setActiveSubDomain(null)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                  !activeSubDomain
-                    ? 'bg-accent-cyan/10 text-accent-cyan font-medium'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>All Topics</span>
-                  <span className="text-[10px] font-code text-text-muted">{pathQuestions.length}</span>
-                </div>
-              </button>
-              {subDomains.map((sd) => {
-                const completedCount = sd.questions.filter((q) => isCompleted(q.id)).length;
-                const allDone = completedCount === sd.questions.length;
-                return (
-                  <button
-                    key={sd.name}
-                    onClick={() => setActiveSubDomain(activeSubDomain === sd.name ? null : sd.name)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                      activeSubDomain === sd.name
-                        ? 'bg-accent-cyan/10 text-accent-cyan font-medium'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
-                    }`}
+        {/* Right Sidebar - Sections Navigation (desktop only) */}
+        {path.sections.length > 0 && (
+          <aside className="hidden lg:block w-56 shrink-0">
+            <div className="sticky top-8">
+              <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+                Sections
+              </h3>
+              <nav className="space-y-1">
+                {path.sections.map((s, i) => (
+                  <Link
+                    key={s.slug}
+                    to={`${basePath}/path/${path.slug}/section/${s.slug}`}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all text-text-secondary hover:text-accent-cyan hover:bg-bg-hover block"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="truncate">{sd.name}</span>
-                      <span className={`text-[10px] font-code shrink-0 ml-2 ${allDone ? 'text-easy' : 'text-text-muted'}`}>
-                        {completedCount}/{sd.questions.length}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-code text-text-muted w-4 text-right shrink-0">{i + 1}.</span>
+                      <span className="truncate">{s.title}</span>
                     </div>
-                    {/* Progress bar */}
-                    <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden mt-1.5">
-                      <div
-                        className="h-full bg-gradient-to-r from-accent-cyan to-accent-green rounded-full transition-all"
-                        style={{ width: `${sd.questions.length > 0 ? (completedCount / sd.questions.length) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </aside>
+        )}
       </div>
 
       <AskChatGpt title={path.title} description={path.description} />

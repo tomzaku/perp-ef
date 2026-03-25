@@ -168,6 +168,19 @@ function App() {
               />
             }
           />
+          <Route
+            path="/algorithm/path/:slug/section/:sectionSlug"
+            element={
+              <SectionDetail
+                paths={learningPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/algorithm"
+                title=""
+                subtitle=""
+              />
+            }
+          />
 
           {/* Category Pages */}
           <Route
