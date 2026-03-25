@@ -32,6 +32,9 @@ function isLowPowerDevice(): boolean {
 
 const lowPower = isLowPowerDevice();
 
+/** Whether Kokoro AI model is too heavy for this device */
+export const isKokoroBlocked = lowPower;
+
 let sessionStart = 0;
 function elapsed(): string {
   return `+${((performance.now() - sessionStart) / 1000).toFixed(2)}s`;
