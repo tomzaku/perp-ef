@@ -1,5 +1,5 @@
 import { useTtsSettings, KOKORO_VOICES, PIPER_VOICES, type TtsEngine } from '../hooks/useTtsSettings';
-import { speakWithKokoro, stopKokoroAudio, isKokoroBlocked } from '../lib/kokoroTts';
+import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
 import { useState } from 'react';
 import { useVisibleSections } from '../hooks/useVisibleSections';
 import { navItems } from './Sidebar';
@@ -16,7 +16,6 @@ import {
 } from '../lib/aiProviders';
 
 const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
-const kokoroDisabled = isSafari || isKokoroBlocked;
 
 const engines: { id: TtsEngine; label: string; desc: string; badge?: string; hidden?: boolean }[] = [
   {
@@ -34,10 +33,10 @@ const engines: { id: TtsEngine; label: string; desc: string; badge?: string; hid
   {
     id: 'kokoro',
     label: 'Kokoro AI',
-    desc: kokoroDisabled
-      ? 'High-quality neural TTS (82M params). Not available on this device — use Piper AI instead.'
+    desc: isSafari
+      ? 'High-quality neural TTS (82M params). Not available on Safari — use Piper AI instead.'
       : 'High-quality neural TTS (82M params) running locally via WebGPU/WASM. ~160MB download on first use.',
-    badge: kokoroDisabled ? 'Unavailable' : 'Best voice',
+    badge: isSafari ? 'Unavailable' : 'Best voice',
   },
 ];
 
@@ -276,7 +275,7 @@ export function SettingsPage() {
 
         <div className="space-y-3">
           {engines.map((e) => {
-            const disabled = e.id === 'kokoro' && kokoroDisabled;
+            const disabled = e.id === 'kokoro' && isSafari;
             return (
             <button
               key={e.id}
