@@ -78,7 +78,7 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
   const dtype = useGPU ? 'fp32' : 'q8';
 
   log(`starting model download... device=${device} dtype=${dtype}`);
-  const loadingToast = toast.loading('Loading Kokoro AI voice model...', { id: 'tts-loading' });
+  toast.loading('Loading Kokoro AI voice model...', { id: 'tts-loading' });
 
   ttsPromise = import('kokoro-js').then(async ({ KokoroTTS }) => {
     const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
