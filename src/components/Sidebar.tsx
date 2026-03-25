@@ -172,50 +172,6 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
         </div>
       </nav>
 
-      {/* Profile & Settings */}
-      <div className="px-3 pb-1 space-y-0.5">
-        <Link
-          to="/profile"
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${
-            location.pathname === '/profile'
-              ? 'bg-accent-cyan/10 text-accent-cyan'
-              : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
-          }`}
-        >
-          <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-            location.pathname === '/profile'
-              ? 'bg-accent-cyan/20 text-accent-cyan'
-              : 'bg-bg-tertiary text-text-muted'
-          }`}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </span>
-          <span className="text-sm font-medium">Profile</span>
-        </Link>
-        <Link
-          to="/settings"
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${
-            location.pathname === '/settings'
-              ? 'bg-accent-cyan/10 text-accent-cyan'
-              : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
-          }`}
-        >
-          <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-            location.pathname === '/settings'
-              ? 'bg-accent-cyan/20 text-accent-cyan'
-              : 'bg-bg-tertiary text-text-muted'
-          }`}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </span>
-          <span className="text-sm font-medium">Settings</span>
-        </Link>
-      </div>
-
       {/* User section */}
       <div className="px-3 py-4 border-t border-border">
         {authLoading ? (
@@ -225,16 +181,22 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
           </div>
         ) : user ? (
           <div className="flex items-center gap-3 px-3 py-2">
-            <img
-              src={user.user_metadata?.avatar_url || ''}
-              alt=""
-              className="w-8 h-8 rounded-full shrink-0"
-              referrerPolicy="no-referrer"
-            />
+            <Link to="/profile" className="shrink-0">
+              <img
+                src={user.user_metadata?.avatar_url || ''}
+                alt=""
+                className={`w-8 h-8 rounded-full ring-2 transition-all ${
+                  location.pathname === '/profile'
+                    ? 'ring-accent-cyan'
+                    : 'ring-transparent hover:ring-accent-cyan/50'
+                }`}
+                referrerPolicy="no-referrer"
+              />
+            </Link>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-text-primary truncate">
+              <Link to="/profile" className="text-sm font-medium text-text-primary truncate block hover:text-accent-cyan transition-colors">
                 {user.user_metadata?.full_name || user.email}
-              </p>
+              </Link>
               <button
                 onClick={signOut}
                 className="text-[10px] text-text-muted hover:text-accent-cyan transition-colors cursor-pointer"
@@ -242,20 +204,50 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
                 Sign out
               </button>
             </div>
+            <Link
+              to="/settings"
+              className={`p-2 rounded-lg transition-all shrink-0 ${
+                location.pathname === '/settings'
+                  ? 'bg-accent-cyan/10 text-accent-cyan'
+                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
+              }`}
+              title="Settings"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </Link>
           </div>
         ) : (
-          <button
-            onClick={signInWithGoogle}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-all cursor-pointer"
-          >
-            <span className="w-8 h-8 rounded-md bg-bg-tertiary flex items-center justify-center shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+          <div className="flex items-center gap-2 px-3 py-2">
+            <button
+              onClick={signInWithGoogle}
+              className="flex-1 flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary transition-all cursor-pointer"
+            >
+              <span className="w-8 h-8 rounded-md bg-bg-tertiary flex items-center justify-center shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+              Sign in with Google
+            </button>
+            <Link
+              to="/settings"
+              className={`p-2 rounded-lg transition-all shrink-0 ${
+                location.pathname === '/settings'
+                  ? 'bg-accent-cyan/10 text-accent-cyan'
+                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
+              }`}
+              title="Settings"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-            </span>
-            Sign in with Google
-          </button>
+            </Link>
+          </div>
         )}
       </div>
     </>
