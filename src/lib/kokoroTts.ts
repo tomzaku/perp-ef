@@ -47,7 +47,7 @@ function isSafari(): boolean {
   return /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
 }
 
-let kokoroUnavailable = isSafari();
+let kokoroUnavailable = isSafari() || lowPower;
 let ttsInstance: KokoroTTSInstance | null = null;
 let ttsPromise: Promise<KokoroTTSInstance> | null = null;
 
@@ -105,18 +105,13 @@ export async function getKokoroTTS(): Promise<KokoroTTSInstance> {
 }
 
 export function preloadKokoro() {
-  // Skip preloading on mobile/low-power devices — use native TTS instead
-  if (lowPower) {
-    log('low-power device detected, skipping AI model preload');
-    return;
-  }
   const engine = getTtsEngine();
   if (engine === 'piper') {
     preloadPiper();
     return;
   }
   if (engine !== 'kokoro') return;
-  if (kokoroUnavailable) return;
+  if (kokoroUnavailable) return; // includes lowPower devices — skip heavy Kokoro model
   sessionStart = performance.now();
   log('preloading model...');
   getKokoroTTS().catch((err) => {
@@ -329,16 +324,6 @@ export async function speakWithKokoro(
   }
 
   const engine = getTtsEngine();
-
-  // On mobile/low-power devices, always use native TTS regardless of setting
-  if (lowPower && engine !== 'native') {
-    log(`low-power device: forcing native TTS (requested=${engine}), text length: ${clean.length}`);
-    options?.onStart?.();
-    await speakNative(clean, options);
-    log('done');
-    return;
-  }
-
   log(`speak requested (engine=${engine}), text length: ${clean.length}`);
 
   if (engine === 'native') {
