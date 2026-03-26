@@ -149,7 +149,6 @@ function App() {
               <PathList
                 paths={learningPaths}
                 questions={allQuestions}
-                isCompleted={isCompleted}
                 basePath="/algorithm"
                 title="Algorithm Learning Paths"
                 subtitle="Master each pattern with structured introductions, templates, and curated problem sets."
@@ -282,7 +281,6 @@ function App() {
               <PathList
                 paths={backendPaths}
                 questions={allQuestions}
-                isCompleted={isCompleted}
                 basePath="/backend"
                 title="Backend Learning Paths"
                 subtitle="Core backend fundamentals — databases, architecture, infrastructure, DevOps, and security."
