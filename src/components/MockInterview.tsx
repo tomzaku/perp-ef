@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Question, SavedConversation } from '../types/question';
 import { useAIChat } from '../hooks/useAIChat';
 import { useConversations } from '../hooks/useConversations';
-import { getCurrentApiKey, setApiKeyForProvider, getProvider, getProviderConfig } from '../lib/aiProviders';
+import { getCurrentApiKey, getProviderConfig } from '../lib/aiProviders';
+import { Link } from 'react-router-dom';
 import { Markdown } from './Markdown';
 import { ReadAloud } from './ReadAloud';
 import { speakWithKokoro, stopKokoroAudio } from '../lib/kokoroTts';
@@ -34,8 +35,6 @@ interface MockInterviewProps {
 export function MockInterview({ question }: MockInterviewProps) {
   const [expanded, setExpanded] = useState(false);
   const [input, setInput] = useState('');
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [showApiKeyForm, setShowApiKeyForm] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(() => !!getCurrentApiKey());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -239,21 +238,11 @@ export function MockInterview({ question }: MockInterviewProps) {
     };
   }, []);
 
-  const handleSaveApiKey = () => {
-    const key = apiKeyInput.trim();
-    if (key) {
-      setApiKeyForProvider(getProvider(), key);
-      setHasApiKey(true);
-      setShowApiKeyForm(false);
-      setApiKeyInput('');
-    }
-  };
-
   const handleStart = () => {
-    if (!hasApiKey) {
-      setShowApiKeyForm(true);
-      return;
-    }
+    // Re-check in case user just came back from settings
+    const keyNow = !!getCurrentApiKey();
+    setHasApiKey(keyNow);
+    if (!keyNow) return;
     setExpanded(true);
     startInterview();
   };
@@ -307,58 +296,32 @@ export function MockInterview({ question }: MockInterviewProps) {
                 History ({conversations.length})
               </button>
             )}
-            <button
-              onClick={() => setShowApiKeyForm(!showApiKeyForm)}
-              className="text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
-            >
-              {hasApiKey ? 'Change API Key' : 'Set API Key'}
-            </button>
           </div>
 
-          {showApiKeyForm && (
-            <div className="mt-4 animate-fade-in space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
-                  placeholder={getProviderConfig().placeholder}
-                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-code focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 placeholder:text-text-muted"
-                  autoFocus
-                />
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={!apiKeyInput.trim()}
-                  className="px-3 py-2 bg-accent-purple text-bg-primary text-xs font-semibold rounded-lg hover:bg-accent-purple/90 transition-colors cursor-pointer disabled:opacity-40"
-                >
-                  Save
-                </button>
-              </div>
-              <p className="text-[11px] text-text-muted leading-relaxed">
-                Get your API key from{' '}
-                <a
-                  href={getProviderConfig().keysUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-purple hover:underline"
-                >
-                  {getProviderConfig().keysLabel}
-                </a>
-                . It starts with <code className="text-[10px] font-code bg-bg-tertiary px-1 py-0.5 rounded">{getProviderConfig().placeholder}</code> and is stored locally in your browser.
-              </p>
+          {!hasApiKey && (
+            <div className="mt-4 animate-fade-in flex items-center gap-2 text-xs text-text-muted">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-purple shrink-0">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span>
+                Set up your API key in{' '}
+                <Link to="/settings" className="text-accent-purple hover:underline font-medium">
+                  Settings
+                </Link>
+                {' '}to get started. Google Gemini offers a free tier.
+              </span>
             </div>
           )}
 
           {error && (
             <div className="mt-3 flex items-center gap-3 text-xs text-accent-red">
               <span>{error}</span>
-              <button
-                onClick={() => { setShowApiKeyForm(true); setHasApiKey(false); }}
-                className="text-text-muted hover:text-accent-purple transition-colors cursor-pointer underline shrink-0"
+              <Link
+                to="/settings"
+                className="text-text-muted hover:text-accent-purple transition-colors underline shrink-0"
               >
-                Reset API Key
-              </button>
+                Check Settings
+              </Link>
             </div>
           )}
 
@@ -581,12 +544,12 @@ export function MockInterview({ question }: MockInterviewProps) {
           {error && (
             <div className="flex items-center justify-between gap-3 text-xs text-accent-red bg-accent-red/5 border border-accent-red/20 rounded-lg px-3 py-2">
               <span>{error}</span>
-              <button
-                onClick={() => { setExpanded(false); handleReset(); setShowApiKeyForm(true); setHasApiKey(false); }}
-                className="text-text-muted hover:text-accent-purple transition-colors cursor-pointer underline shrink-0"
+              <Link
+                to="/settings"
+                className="text-text-muted hover:text-accent-purple transition-colors underline shrink-0"
               >
-                Reset API Key
-              </button>
+                Check Settings
+              </Link>
             </div>
           )}
 

@@ -82,7 +82,7 @@ const MODEL_KEY = 'fe-interview-ai-model';
 const API_KEY_PREFIX = 'fe-interview-api-key'; // legacy key (Anthropic)
 
 export function getProvider(): ProviderId {
-  return (localStorage.getItem(PROVIDER_KEY) as ProviderId) || 'anthropic';
+  return (localStorage.getItem(PROVIDER_KEY) as ProviderId) || 'google';
 }
 
 export function setProvider(id: ProviderId): void {
