@@ -727,6 +727,104 @@ flowchart TD
     G -->|No| I[Backtrack — return]
 ```
 
+#### Visual Walkthrough — Subsets [1, 2, 3]
+
+Let's trace `backtrack(start)` on `[1, 2, 3]` step by step. Every call collects `current` as a subset, then tries adding each element from index `start` onward.
+
+```
+Legend: → = CHOOSE (push), ← = UNCHOOSE (pop), ★ = collect subset
+
+Call stack             current       Action
+─────────────────────────────────────────────────────────
+backtrack(0)           []            ★ collect []
+├─ i=0: push 1        [1]
+│  backtrack(1)        [1]           ★ collect [1]
+│  ├─ i=1: push 2     [1,2]
+│  │  backtrack(2)     [1,2]         ★ collect [1,2]
+│  │  ├─ i=2: push 3  [1,2,3]
+│  │  │  backtrack(3)  [1,2,3]       ★ collect [1,2,3]
+│  │  │                              (no more choices, return)
+│  │  └─ pop 3        [1,2]         ← UNCHOOSE 3
+│  │                                 (i loop ends, return)
+│  └─ pop 2           [1]           ← UNCHOOSE 2
+│  ├─ i=2: push 3     [1,3]
+│  │  backtrack(3)     [1,3]         ★ collect [1,3]
+│  │                                 (no more choices, return)
+│  └─ pop 3           [1]           ← UNCHOOSE 3
+│                                    (i loop ends, return)
+└─ pop 1              []            ← UNCHOOSE 1
+├─ i=1: push 2        [2]
+│  backtrack(2)        [2]           ★ collect [2]
+│  ├─ i=2: push 3     [2,3]
+│  │  backtrack(3)     [2,3]         ★ collect [2,3]
+│  │                                 (no more choices, return)
+│  └─ pop 3           [2]           ← UNCHOOSE 3
+│                                    (i loop ends, return)
+└─ pop 2              []            ← UNCHOOSE 2
+├─ i=2: push 3        [3]
+│  backtrack(3)        [3]           ★ collect [3]
+│                                    (no more choices, return)
+└─ pop 3              []            ← UNCHOOSE 3
+
+Result: [[], [1], [1,2], [1,2,3], [1,3], [2], [2,3], [3]]
+         8 subsets = 2³ ✓
+```
+
+**What to notice:**
+- The recursion goes **deep first** — all the way to `[1,2,3]` before it backtracks
+- **UNCHOOSE (pop) restores state** so sibling branches see a clean `current`
+- `start` parameter prevents duplicates: after choosing `2`, we only look at `3` (not back at `1`)
+- Every node in the tree (not just leaves) produces a valid subset
+
+#### Visual Walkthrough — Permutations [1, 2, 3]
+
+For permutations, any unused element can be chosen at each step. The tree is wider because we scan all indices, not just `start..end`.
+
+```
+Legend: → = CHOOSE (push + mark used), ← = UNCHOOSE (pop + unmark)
+
+Call stack                  current     used          Action
+──────────────────────────────────────────────────────────────
+backtrack()                 []          [F,F,F]
+├─ i=0: choose 1           [1]         [T,F,F]
+│  backtrack()              [1]
+│  ├─ i=0: skip (used)
+│  ├─ i=1: choose 2        [1,2]       [T,T,F]
+│  │  backtrack()           [1,2]
+│  │  ├─ i=0: skip
+│  │  ├─ i=1: skip
+│  │  └─ i=2: choose 3     [1,2,3]     [T,T,T]
+│  │     backtrack()        [1,2,3]     ★ RECORD [1,2,3]
+│  │     unchoose 3         [1,2]       [T,T,F]    ←
+│  │  (return)
+│  └─ unchoose 2           [1]         [T,F,F]    ←
+│  ├─ i=2: choose 3        [1,3]       [T,F,T]
+│  │  backtrack()           [1,3]
+│  │  ├─ i=0: skip
+│  │  ├─ i=1: choose 2     [1,3,2]     [T,T,T]
+│  │  │  backtrack()        [1,3,2]     ★ RECORD [1,3,2]
+│  │  │  unchoose 2         [1,3]       [T,F,T]    ←
+│  │  └─ i=2: skip
+│  │  (return)
+│  └─ unchoose 3           [1]         [T,F,F]    ←
+│  (return)
+└─ unchoose 1              []          [F,F,F]    ←
+├─ i=1: choose 2           [2]         [F,T,F]
+│  ...→ [2,1,3] ★  ...→ [2,3,1] ★
+└─ unchoose 2              []          [F,F,F]    ←
+├─ i=2: choose 3           [3]         [F,F,T]
+│  ...→ [3,1,2] ★  ...→ [3,2,1] ★
+└─ unchoose 3              []          [F,F,F]    ←
+
+Result: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+         6 permutations = 3! ✓
+```
+
+**Key differences from Subsets:**
+- **No `start` parameter** — scan all indices; use `used[]` to skip taken elements
+- **Only leaves are solutions** (when `current.length === n`), not every node
+- UNCHOOSE must restore **both** `current` (pop) **and** `used[i]` (set false)
+
 #### Subsets — Generate All Subsets of an Array
 
 ```
