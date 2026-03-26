@@ -7,17 +7,39 @@ import { DifficultyBadge } from './DifficultyBadge';
 import { Markdown } from './Markdown';
 import { AskChatGpt } from './AskChatGpt';
 import { ReadAloud } from './ReadAloud';
+import { FilterableQuestionList } from './FilterableQuestionList';
 
 interface LearningPathViewProps {
   paths: LearningPathCategory[];
   questions: Question[];
   isCompleted: (id: string) => boolean;
+  isBookmarked?: (id: string) => boolean;
+  toggleCompleted?: (id: string) => void;
+  toggleBookmarked?: (id: string) => void;
   basePath: string;
   title: string;
   subtitle: string;
 }
 
-function PathList({ paths, questions, isCompleted, basePath, title, subtitle }: LearningPathViewProps) {
+function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted, toggleBookmarked, basePath, title, subtitle }: LearningPathViewProps) {
+  const [activeTab, setActiveTab] = useState<'learning' | 'questions'>('learning');
+
+  // Collect all unique questions referenced by paths in this scope
+  const scopeQuestions = useMemo(() => {
+    const seen = new Set<string>();
+    const result: Question[] = [];
+    for (const p of paths) {
+      for (const id of p.questionIds) {
+        if (!seen.has(id)) {
+          seen.add(id);
+          const q = questions.find((q) => q.id === id);
+          if (q) result.push(q);
+        }
+      }
+    }
+    return result;
+  }, [paths, questions]);
+
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
@@ -29,53 +51,89 @@ function PathList({ paths, questions, isCompleted, basePath, title, subtitle }: 
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger">
-        {paths.map((path) => {
-          const pathQuestions = path.questionIds
-            .map((id) => questions.find((q) => q.id === id))
-            .filter(Boolean) as Question[];
-          const completed = pathQuestions.filter((q) => isCompleted(q.id)).length;
-          const pct = pathQuestions.length > 0 ? Math.round((completed / pathQuestions.length) * 100) : 0;
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-border">
+        <button
+          onClick={() => setActiveTab('learning')}
+          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'learning'
+              ? 'border-accent-cyan text-accent-cyan'
+              : 'border-transparent text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          Learning Paths
+        </button>
+        <button
+          onClick={() => setActiveTab('questions')}
+          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'questions'
+              ? 'border-accent-cyan text-accent-cyan'
+              : 'border-transparent text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          All Questions
+          <span className="ml-1.5 text-xs text-text-muted">({scopeQuestions.length})</span>
+        </button>
+      </div>
 
-          return (
-            <Link
-              key={path.slug}
-              to={`${basePath}/path/${path.slug}`}
-              className="block border border-border bg-bg-card rounded-xl p-5 hover:border-accent-cyan/30 hover:bg-bg-hover transition-all group"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="w-10 h-10 rounded-lg bg-accent-cyan/10 text-accent-cyan flex items-center justify-center font-code font-bold text-sm">
-                  {path.icon}
-                </span>
-                <div>
-                  <h3 className="text-sm font-semibold text-text-primary group-hover:text-accent-cyan transition-colors">
-                    {path.title}
-                  </h3>
-                  <span className="text-[11px] text-text-muted">{pathQuestions.length} problems</span>
-                </div>
-              </div>
+      {activeTab === 'learning' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger">
+          {paths.map((path) => {
+            const pathQuestions = path.questionIds
+              .map((id) => questions.find((q) => q.id === id))
+              .filter(Boolean) as Question[];
+            const completed = pathQuestions.filter((q) => isCompleted(q.id)).length;
+            const pct = pathQuestions.length > 0 ? Math.round((completed / pathQuestions.length) * 100) : 0;
 
-              <p className="text-xs text-text-secondary mb-3 line-clamp-2">
-                {path.description}
-              </p>
-
-              <div className="flex items-center justify-between">
-                <div className="flex-1 mr-4">
-                  <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-accent-cyan to-accent-green rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
+            return (
+              <Link
+                key={path.slug}
+                to={`${basePath}/path/${path.slug}`}
+                className="block border border-border bg-bg-card rounded-xl p-5 hover:border-accent-cyan/30 hover:bg-bg-hover transition-all group"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="w-10 h-10 rounded-lg bg-accent-cyan/10 text-accent-cyan flex items-center justify-center font-code font-bold text-sm">
+                    {path.icon}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-accent-cyan transition-colors">
+                      {path.title}
+                    </h3>
+                    <span className="text-[11px] text-text-muted">{pathQuestions.length} problems</span>
                   </div>
                 </div>
-                <span className="text-[10px] font-code text-text-muted">
-                  {completed}/{pathQuestions.length}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+
+                <p className="text-xs text-text-secondary mb-3 line-clamp-2">
+                  {path.description}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 mr-4">
+                    <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-accent-cyan to-accent-green rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-code text-text-muted">
+                    {completed}/{pathQuestions.length}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <FilterableQuestionList
+          questions={scopeQuestions}
+          isCompleted={isCompleted}
+          isBookmarked={isBookmarked ?? (() => false)}
+          toggleCompleted={toggleCompleted ?? (() => {})}
+          toggleBookmarked={toggleBookmarked ?? (() => {})}
+          hideCount
+        />
+      )}
     </div>
   );
 }

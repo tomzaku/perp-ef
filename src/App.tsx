@@ -153,6 +153,7 @@ function App() {
                 basePath="/algorithm"
                 title="Algorithm Learning Paths"
                 subtitle="Master each pattern with structured introductions, templates, and curated problem sets."
+                {...sharedProps}
               />
             }
           />
@@ -285,6 +286,7 @@ function App() {
                 basePath="/backend"
                 title="Backend Learning Paths"
                 subtitle="Core backend fundamentals — databases, architecture, infrastructure, DevOps, and security."
+                {...sharedProps}
               />
             }
           />
