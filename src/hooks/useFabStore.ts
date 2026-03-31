@@ -9,6 +9,7 @@ interface FabState {
   /** Context for AskChatGpt — set by the page that renders it */
   chatGptContext: { title: string; description: string } | null;
 
+  expand: () => void;
   toggleExpanded: () => void;
   collapse: () => void;
   openPanel: (panel: FabPanel) => void;
@@ -23,6 +24,7 @@ export const useFabStore = create<FabState>((set) => ({
   timerOpen: false,
   chatGptContext: null,
 
+  expand: () => set({ expanded: true }),
   toggleExpanded: () => set((s) => ({ expanded: !s.expanded })),
   collapse: () => set({ expanded: false }),
   openPanel: (panel) => set({ panel, expanded: false }),

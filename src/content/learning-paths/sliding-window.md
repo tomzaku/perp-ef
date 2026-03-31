@@ -58,6 +58,14 @@ Answer: 9  (window [5, 1, 3])
 
 **Key insight:** Each slide does exactly one addition and one subtraction — O(1) per step. Total: O(n).
 
+#### Real World
+> **[Network monitoring]** — Network traffic analyzers (like those used by Cloudflare and AWS) compute rolling averages over fixed-time windows to detect DDoS spikes: the sum of the last k packets is updated in O(1) per new packet rather than recomputing from scratch.
+
+#### Practice
+1. Given an array of integers and a window size k, find the maximum sum of any contiguous subarray of size k. Solve in O(n).
+2. Given a binary array and a window size k, find the maximum number of 1s in any window of size k (equivalent to: what position gives the best k-element window?).
+3. For a fixed-size window of size k, the element to remove when sliding is at index `i - k`. Why is it `i - k` and not `i - k + 1`, and what off-by-one error does this distinction prevent?
+
 #### Full Code Example
 
 ```ts
@@ -314,6 +322,14 @@ function minWindow(s: string, t: string): string {
 - **Longest** problems: expand right freely, shrink left when **invalid**, record answer **after** shrinking (window is valid).
 - **Shortest** problems: expand right until **valid**, record answer **before** shrinking, shrink left while **valid**.
 
+#### Real World
+> **[Text editors / IDE search]** — The "find minimum window containing all search terms" is a real feature in advanced text editors and log analysis tools. The variable-size window pattern (LeetCode 76) directly models how tools like `grep -o` with context matching locate the smallest matching span.
+
+#### Practice
+1. Given a string s and a target string t, find the minimum window in s containing all characters of t (Minimum Window Substring / LeetCode 76). Implement with a "formed" counter for O(1) validity checks.
+2. Given a string s, find the length of the longest substring without repeating characters (Longest Substring Without Repeating Characters / LeetCode 3).
+3. In a "longest" variable window problem, why do you record the answer AFTER the shrink loop rather than before? What incorrect result would you get if you recorded before shrinking?
+
 ---
 
 ### Tracking Window State
@@ -383,6 +399,14 @@ have.set(ch, have.get(ch)! - 1);
 
 The window is valid when `formed === required` (where `required = need.size`). This makes the validity check O(1).
 
+#### Real World
+> **[Streaming analytics]** — Platforms like Apache Kafka Streams and Flink maintain in-memory hash maps of element frequencies within time windows to compute real-time statistics (distinct user counts, hot items). The "formed count" optimization is essential for production performance at millions of events per second.
+
+#### Practice
+1. Given a string s and a non-empty string p, find all starting indices in s where anagrams of p begin (Find All Anagrams / LeetCode 438). Use array frequency tracking for O(1) per slide.
+2. Given a string s and a pattern p, determine if any permutation of p appears as a substring of s (Permutation in String / LeetCode 567). How does the "match count" optimization improve clarity?
+3. When tracking window state with a frequency map, when should you delete zero-count entries versus leave them in the map, and how does this choice affect the correctness of a `freq.size` check?
+
 #### 4. Tracking Additional State
 
 Some problems need more than frequencies:
@@ -419,6 +443,14 @@ Product of window                | Running product (watch for zeros!)
 | Longest Repeating Character Replacement (LC 424) | Variable | len - maxFreq <= k | Medium |
 
 **The "atMost" Trick:** Problems asking for "exactly K" can often be decomposed as `atMost(K) - atMost(K - 1)`. This converts a hard exact-count problem into two easier at-most problems, each solvable with a standard variable-size window.
+
+#### Real World
+> **[A/B testing platforms]** — Experiment platforms like Optimizely and Statsig use sliding window counters to track conversion rates within rolling time windows, mapping directly to the "count distinct elements" and "minimum window covering all variants" patterns.
+
+#### Practice
+1. Given a binary array and an integer k, find the maximum number of consecutive 1s if you can flip at most k zeros (Max Consecutive Ones III / LeetCode 1004). Map this to a "at most k zeros in window" constraint.
+2. Given an array of integers and k, count the number of "nice subarrays" that contain exactly k odd numbers (Count Number of Nice Subarrays / LeetCode 1248). Apply the atMost trick.
+3. Why does the "exactly K" decomposition `atMost(K) - atMost(K-1)` work mathematically? Prove that no subarray is double-counted or missed.
 
 ---
 
@@ -510,6 +542,14 @@ result = max(result, windowLen);        result = min(result, windowLen);
                                         shrink;
                                       }
 ```
+
+#### Real World
+> **[Production incident post-mortems]** — Many sliding window bugs found in production (e.g., a metrics dashboard showing inflated counts) trace back to one of these six pitfalls — off-by-one in window formation or recording the answer at the wrong shrink point.
+
+#### Practice
+1. Given nums and k, find the maximum subarray sum of size exactly k. Trace through the code for `nums = [1,2,3,4,5]`, `k = 3` and verify the off-by-one handling at `i >= k - 1`.
+2. Given a string "abcdbea" and the constraint "no repeating characters", simulate the variable window manually and show why `if` (instead of `while`) for shrinking produces an incorrect result.
+3. In the minimum window substring problem, you record the answer inside the `while (valid)` loop before shrinking. What is the exact condition that makes this correct — why isn't recording after the loop sufficient?
 
 ---
 
@@ -617,6 +657,14 @@ while (deque.length > 0 && nums[deque[deque.length - 1]] >= nums[i]) {
 | Jump Game VI (LC 1696) | DP + deque |
 | Longest Continuous Subarray (LC 1438) | Two deques (max and min) |
 
+#### Real World
+> **[Real-time video processing]** — Video streaming encoders compute rolling maximum and minimum pixel values within a moving window to detect scene changes. A monotonic deque enables O(1) amortized updates versus O(k) with a plain array, critical for 60fps real-time pipelines.
+
+#### Practice
+1. Given an array and window size k, return the maximum value in each window of size k (Sliding Window Maximum / LeetCode 239). Implement using a monotonic deque storing indices.
+2. Given an array, find the length of the longest subarray where the absolute difference between max and min is at most k (Longest Continuous Subarray with Absolute Diff ≤ Limit / LeetCode 1438). Use two deques.
+3. The monotonic deque approach for sliding window maximum is O(n) despite the inner `while` loop. Explain the amortized argument: how many total push and pop operations occur across all n iterations?
+
 ---
 
 ### Complexity Summary
@@ -629,6 +677,14 @@ while (deque.length > 0 && nums[deque[deque.length - 1]] >= nums[i]) {
 | Monotonic deque | O(n) | O(k) | Each index pushed/popped at most once; deque bounded by k |
 
 **Why O(n) and not O(n\*k)?** The two-pointer technique looks like it could do O(n) work for each `right` step (since `left` can advance many times). But across ALL iterations, `left` advances at most `n` times total. So the total work from both pointers combined is O(n) + O(n) = O(n).
+
+#### Real World
+> **[Data engineering / ETL pipelines]** — Stream processing systems choose between fixed-window aggregation (O(1) per element, bounded memory) and variable-window aggregation (O(n) worst-case memory) based on query type, exactly mirroring these complexity trade-offs in production data infrastructure.
+
+#### Practice
+1. Given an array and a sliding window of size k, compute the maximum element in each window in O(n) time. Compare the time and space usage between the deque solution and a sorted-set solution.
+2. Explain why the variable-size window approach is O(n) total even though the `left` pointer can jump multiple positions in a single iteration of the outer loop.
+3. For the "minimum size subarray sum" problem, should you use a fixed or variable window? What specifically about the problem statement tells you the window size is variable, not fixed?
 
 ## ELI5
 

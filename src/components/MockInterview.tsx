@@ -269,12 +269,6 @@ export function MockInterview({ question }: MockInterviewProps) {
           <p className="text-sm text-text-secondary mb-3">
             Practice this problem with an AI interviewer that asks follow-ups, probes edge cases, and gives feedback — just like a real interview.
           </p>
-          <p className="text-xs text-text-muted mb-4 flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green shrink-0">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span>Your conversations and <span className="text-accent-green font-medium">API key are never stored on our server</span> — everything stays in your browser only.</span>
-          </p>
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={handleStart}
@@ -285,17 +279,6 @@ export function MockInterview({ question }: MockInterviewProps) {
               </svg>
               Start Mock Interview
             </button>
-            {conversations.length > 0 && (
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-1.5 text-xs text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
-                History ({conversations.length})
-              </button>
-            )}
           </div>
 
           {!hasApiKey && (
@@ -326,18 +309,10 @@ export function MockInterview({ question }: MockInterviewProps) {
           )}
 
           {/* History panel in start view */}
-          {showHistory && conversations.length > 0 && (
+          {conversations.length > 0 && (
             <div className="mt-4 border border-border rounded-lg overflow-hidden animate-fade-in">
-              <div className="px-3 py-2 border-b border-border flex items-center justify-between bg-bg-tertiary/50">
+              <div className="px-3 py-2 border-b border-border bg-bg-tertiary/50">
                 <span className="text-xs font-medium text-text-secondary">Previous sessions</span>
-                <button
-                  onClick={() => setShowHistory(false)}
-                  className="text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
               </div>
               <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
                 {conversations.map((conv) => (

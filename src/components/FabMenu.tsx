@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useFabStore } from '../hooks/useFabStore';
 
 export function FabMenu() {
-  const { expanded, panel, chatGptContext, toggleExpanded, collapse, openPanel, toggleTimer } = useFabStore();
+  const { expanded, panel, chatGptContext, expand, toggleExpanded, collapse, openPanel, toggleTimer } = useFabStore();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -21,7 +21,12 @@ export function FabMenu() {
   if (panel !== 'none') return null;
 
   return (
-    <div ref={menuRef} className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2">
+    <div
+      ref={menuRef}
+      className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2"
+      onMouseEnter={expand}
+      onMouseLeave={collapse}
+    >
       {/* Expanded options */}
       {expanded && (
         <div className="flex flex-col items-end gap-2 animate-fade-in">

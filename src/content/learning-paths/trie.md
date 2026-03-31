@@ -37,6 +37,14 @@ Each trie node has:
  e  ← "apple" ends here, "app" also if marked
 ```
 
+#### Real World
+> **[Autocomplete systems]** — Google Search's autocomplete and IDE code completion (like VS Code IntelliSense) use tries to power type-ahead: as each character is typed, the engine walks one node deeper and returns all words in the subtree below as suggestions, in O(m + output) time.
+
+#### Practice
+1. Implement a Trie class with `insert`, `search`, and `startsWith` operations. What node structure and traversal logic does each operation require?
+2. Given a list of products and a search word typed character by character, for each prefix return the 3 lexicographically smallest matching products (Search Suggestions System / LeetCode 1268).
+3. Why does a trie use O(N × m × alphabet) space in the worst case (no shared prefixes), and when does shared prefix compression make tries significantly more space-efficient than a hash set?
+
 ### Operations
 
 **Insert:** Walk the trie character by character, creating new nodes where needed. Mark the last node as `isEnd = true`.
@@ -47,12 +55,28 @@ Each trie node has:
 
 **Wildcard Search:** When encountering a wildcard like '.', recursively try all children at that position.
 
+#### Real World
+> **[Spell checkers]** — Operating system and browser spell checkers load a dictionary into a trie at startup, then for each typed word perform an O(m) search. Wildcard DFS on the trie powers "did you mean?" suggestions by exploring single-character substitutions at each level.
+
+#### Practice
+1. Design a data structure that supports adding a word and searching for a word, where search may contain the wildcard '.' matching any single character (Add and Search Word / LeetCode 211).
+2. Given a list of words, implement a function that returns the longest word in the dictionary that can be built one character at a time. Each prefix of the word must also be in the dictionary.
+3. What is the key difference between `search` and `startsWith` in a trie, and why does `startsWith` not check `isEnd`? Give an example where forgetting this distinction produces a wrong answer.
+
 ### When to Use
 
 - **Autocomplete:** Walk to the prefix node, then DFS to find all completions
 - **Spell check:** Insert dictionary, search for each word
 - **Word search on grid:** Build trie from word list, DFS the grid while walking the trie simultaneously
 - **Longest common prefix:** Walk until children diverge
+
+#### Real World
+> **[Network routing / IP lookup]** — Internet routers use trie-based longest-prefix matching (LPM) to route IP packets: the routing table is a binary trie over 32-bit IP addresses, and each packet lookup walks up to 32 trie levels in O(1) hardware time using TCAM (ternary content-addressable memory).
+
+#### Practice
+1. Given an m×n board and a list of words, find all words that exist in the board via adjacent cells (Word Search II / LeetCode 212). Why is a trie more efficient than running individual DFS for each word?
+2. Given an array of strings, find the longest common prefix shared by all strings (Longest Common Prefix / LeetCode 14). Implement using a trie and identify where branches diverge.
+3. For the Word Search II problem, why does building a trie from the word list and doing a single DFS over the board achieve better performance than running one DFS per word?
 
 ### Complexity
 
@@ -65,6 +89,14 @@ Each trie node has:
 
 Where m = word length, N = number of words. In practice, shared prefixes significantly reduce space.
 
+#### Real World
+> **[Competitive programming / interview analysis]** — Tries are one of the few data structures where the time complexity is independent of dictionary size N — O(m) for a word of length m regardless of how many words are stored. This property is why they outperform hash maps at autocomplete scale (millions of dictionary entries).
+
+#### Practice
+1. Given n words and q prefix queries, answer each query with the count of dictionary words starting with that prefix. What is the per-query time complexity with a trie versus scanning all words?
+2. Insert all words from a dictionary into a trie. Then, given a prefix string, return all words in the dictionary with that prefix in alphabetical order (DFS through the subtree).
+3. Trie insert and search are O(m). A hash map with string keys is also O(m) (due to hashing). When does the trie win, and what operation gives it an advantage over a hash map?
+
 ### Trie vs Hash Map
 
 | | Trie | Hash Map |
@@ -75,6 +107,14 @@ Where m = word length, N = number of words. In practice, shared prefixes signifi
 | Wildcards | DFS at wildcard positions | Regex scan |
 
 Use a trie when prefix operations are needed. Use a hash map when you only need exact lookups.
+
+#### Real World
+> **[Search engine indexing]** — Modern search engines use tries (or compressed variants like radix trees) for their inverted index vocabulary because prefix queries ("search everything starting with 'comp'") are O(m) with a trie but require a full O(N) scan with a hash map, where N is the vocabulary size (millions of terms).
+
+#### Practice
+1. Given a list of strings, determine if any string is a prefix of another string in the list (Trie vs Hash Set comparison problem). Solve using a trie and using a hash set, and compare the code complexity.
+2. You have a dictionary of 10,000 words. A user types characters one by one. At each step, return the count of words that still match as a valid completion. What trie augmentation stores this count efficiently?
+3. In what scenario would a compressed trie (radix tree) use significantly less memory than a standard trie, and what is the trade-off in implementation complexity?
 
 ## ELI5
 

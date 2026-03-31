@@ -25,6 +25,14 @@ The two-pointer technique uses two indices that traverse a data structure — ty
 
 **Three Pointers and Beyond:** Some problems like 3Sum fix one pointer and apply converging two-pointer on the remainder. Dutch National Flag uses three pointers to partition into three groups in a single pass.
 
+#### Real World
+> **[Database query optimization]** — Merge joins in relational databases (PostgreSQL, MySQL) use the same-direction two-pointer technique on two sorted result sets: advance the pointer that is behind, and emit a match when both point to equal keys — O(n + m) without any hashing overhead.
+
+#### Practice
+1. Given a sorted array, find all pairs whose sum equals a target (Two Sum II / LeetCode 167). Use converging pointers and explain why each pointer movement is safe.
+2. Given an integer array, find all unique triplets that sum to zero (3Sum / LeetCode 15). Fix one element and apply two pointers on the remainder.
+3. Why does the converging two-pointer approach require the array to be sorted first? Construct an example showing what goes wrong on an unsorted array.
+
 ```mermaid
 flowchart LR
     subgraph Converging
@@ -40,9 +48,25 @@ flowchart LR
 
 Look for sorted arrays, problems asking for pairs or triplets with a target sum, palindrome checks, or in-place array modifications. The sorted property is crucial for converging pointers — it guarantees that moving a pointer changes the sum in a predictable direction.
 
+#### Real World
+> **[DNA sequence analysis]** — Bioinformatics tools use two-pointer techniques to find complementary base-pair matches in sorted sequence databases, enabling O(n) palindrome detection in DNA strands (sequences that read the same on both complementary strands).
+
+#### Practice
+1. Given a string, determine if it is a palindrome, considering only alphanumeric characters and ignoring case (Valid Palindrome / LeetCode 125). Use converging pointers from both ends.
+2. Given a sorted array, remove duplicates in-place such that each element appears at most twice. Return the new length (Remove Duplicates from Sorted Array II / LeetCode 80). Use same-direction pointers.
+3. For palindrome checking, the converging pointer approach is O(n) time and O(1) space. How does this compare to the "reverse and compare" approach in terms of space, and when does the space difference matter?
+
 ### Complexity
 
 Two pointers typically achieve O(n) time and O(1) space. For problems like 3Sum, fixing one pointer yields O(n²) total, which is optimal. The technique shines when you need to avoid hash map overhead or when the problem demands constant space.
+
+#### Real World
+> **[Memory-constrained systems]** — Embedded systems and real-time processors (like those in medical devices or aerospace) use two-pointer algorithms specifically for their O(1) space guarantee — no heap allocation, predictable memory footprint, and no garbage collection pauses.
+
+#### Practice
+1. Given an array of integers, find the container that holds the most water between two vertical lines (Container With Most Water / LeetCode 11). Argue why moving the shorter line inward is the correct greedy choice.
+2. Given a sorted array, sort it in-place such that all negative numbers come first without changing their relative order. Use the Dutch National Flag (three-pointer) approach.
+3. Two-pointer achieves O(n) for sorted pair problems, while hash map also achieves O(n) but without the sorted requirement. When would you still prefer two pointers over a hash map on a sorted array?
 
 ## ELI5
 

@@ -27,6 +27,14 @@ Arrays and hash maps form the backbone of most coding interview problems. The ke
 
 **Prefix Sums:** Precompute cumulative sums so that any subarray sum can be calculated in O(1) as `prefix[right] - prefix[left - 1]`. Combined with a hash map tracking prefix sums seen so far, this solves subarray-sum-equals-K problems efficiently.
 
+#### Real World
+> **[Google Search]** — Autocomplete and search-result deduplication rely on frequency maps to count and rank candidate terms across billions of queries. Hash maps make these lookups O(1) per query instead of scanning the full index each time.
+
+#### Practice
+1. Given an array of integers and a target, return the indices of two numbers that add up to the target (Two Sum). Implement this in O(n) using a hash map.
+2. Given a list of strings, group all anagrams together and return the groups.
+3. Why is a hash map preferred over sorting for the "find duplicates" problem when the array is unsorted and large?
+
 ```mermaid
 flowchart TD
     A[Input Array] --> B[Hash Map]
@@ -41,9 +49,25 @@ flowchart TD
 
 Most hash-based solutions run in O(n) time and O(n) space. The pattern is: iterate once, store what you need, and look up in constant time. When you see a problem asking about pairs, duplicates, frequencies, or subarray sums, reach for a hash map first.
 
+#### Real World
+> **[Amazon / E-commerce]** — Recommendation engines count item co-occurrences across millions of orders using frequency maps, then surface the top-K items in O(n log K) time using a min-heap combined with the frequency count.
+
+#### Practice
+1. Given an array of integers, find the top K frequent elements. What is the optimal time complexity?
+2. Given a list of integers where every element appears twice except one, find the unique element. Can you do it in O(n) time and O(1) space?
+3. When would you prefer a frequency array over a hash map, and why does this matter for performance?
+
 ### Common Pitfalls
 
 Watch for hash collisions in edge cases, handle missing keys gracefully, and remember that the space-time tradeoff is almost always worth it in interviews.
+
+#### Real World
+> **[Financial Systems]** — Portfolio analytics systems use prefix sums to answer "what was the total return over any date range?" in O(1) after an O(n) preprocessing step, enabling real-time queries over years of daily data.
+
+#### Practice
+1. Given an integer array and a target sum K, count the number of contiguous subarrays whose sum equals K. Solve in O(n).
+2. Given a binary array, find the maximum length of a contiguous subarray with an equal number of 0s and 1s.
+3. Why does the prefix-sum-plus-hash-map approach need to initialize `prefixCount[0] = 1` before iterating? What bug does this prevent?
 
 ## ELI5
 

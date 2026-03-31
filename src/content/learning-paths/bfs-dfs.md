@@ -143,6 +143,14 @@ flowchart TD
 
 **Key takeaway:** BFS guarantees shortest path in unweighted graphs. Always mark visited when enqueuing. Use level-order processing when you need distance information.
 
+#### Real World
+> **[Social networks]** — LinkedIn's "degrees of connection" feature uses BFS on the social graph: BFS from your profile guarantees the shortest path (fewest hops) to any other user, making level-1, level-2, and level-3 connections meaningful and accurate.
+
+#### Practice
+1. Given a binary tree, return its level-order traversal as a list of lists, where each inner list contains the values at that depth level.
+2. Given an undirected graph represented as an adjacency list, find the shortest path (in number of edges) between two nodes using BFS.
+3. Why must you mark nodes as visited when enqueuing rather than when dequeuing? Construct a small graph example that shows the bug caused by the wrong approach.
+
 ### BFS on Grids
 
 Many BFS problems use a 2D grid instead of an adjacency list. Each cell is a "node" and its neighbors are the 4 (or 8) adjacent cells. The same BFS logic applies — just translate grid coordinates into neighbor traversal.
@@ -258,6 +266,14 @@ visited[r * cols + c] = true;
 | **Word Ladder** | BFS on implicit graph — each word is a node |
 
 **Key takeaway:** Grid BFS is just regular BFS where neighbors = adjacent cells. Always check bounds, walls, and visited status. Use array indexing over string keys for performance.
+
+#### Real World
+> **[Navigation / mapping]** — Google Maps' routing for pedestrian paths on city grids uses BFS (or Dijkstra on weighted grids) to find the shortest walkable route, treating each city block intersection as a cell and walls as obstacles.
+
+#### Practice
+1. Given an n×n binary matrix where 0 is open and 1 is blocked, find the length of the shortest path from the top-left to the bottom-right cell moving in 8 directions (Shortest Path in Binary Matrix).
+2. Given a grid of 0s (empty) and 1s (walls), find the nearest 0 for each cell and return the distance matrix (01 Matrix / LeetCode 542).
+3. When using a grid cell coordinate `(r, c)` as a visited-set key, why is using a flat index `r * cols + c` faster than the string key `"r,c"`, and when does this matter?
 
 ### Multi-Source BFS
 
@@ -399,6 +415,14 @@ If any fresh orange remains after BFS → return -1 (impossible).
 ```
 
 **Key takeaway:** Multi-source BFS is the same as regular BFS but with multiple starting nodes in the queue. It computes nearest-source distances in a single O(n) pass instead of O(k×n) for k sources.
+
+#### Real World
+> **[Logistics / delivery routing]** — Delivery fleet systems compute the distance from every warehouse (source) to every customer location simultaneously using multi-source BFS on a road network, enabling real-time dispatch assignment without per-warehouse separate BFS calls.
+
+#### Practice
+1. In a grid where 2 means rotten and 1 means fresh, every minute a rotten orange infects all adjacent fresh ones. Find the minimum time for all oranges to rot, or -1 if impossible (Rotting Oranges).
+2. Given a grid of rooms (0) and walls (INF), with gates at 0-distance cells, fill each room with its distance to the nearest gate (Walls and Gates).
+3. Why is multi-source BFS faster than running individual BFS from each source? Express the complexity of both approaches in terms of k (sources) and n² (grid cells).
 
 ### DFS Fundamentals
 
@@ -564,6 +588,14 @@ flowchart TD
 
 **Key takeaway:** DFS is the go-to for exploring all paths, detecting cycles, topological sorting, and any recursive structure. Use recursive for clean code, iterative to avoid stack overflow.
 
+#### Real World
+> **[Web crawlers]** — Early web crawlers like those built at Google use DFS to discover pages: follow a link as deep as possible before backtracking, using a visited set to avoid re-crawling. Cycle detection (3-color marking) prevents infinite loops on cyclic link graphs.
+
+#### Practice
+1. Given a directed graph represented as an adjacency list, determine if it contains a cycle using DFS with three-color marking (white/gray/black).
+2. Given a binary tree, return all root-to-leaf paths as strings (e.g., "1->2->5"). Use DFS with backtracking to build each path.
+3. When should you use iterative DFS over recursive DFS, and what is the maximum call stack depth before risking a stack overflow in most JavaScript runtimes?
+
 ### DFS on Grids
 
 Grid-based DFS is used for **flood fill**, **connected components** (island counting), **path existence**, and **area calculation**. It's simpler than BFS on grids because you don't need a queue — just recurse into neighbors.
@@ -693,6 +725,14 @@ function solve(board: string[][]): void {
 | Surrounded regions / border problems | Multi-source distance problems |
 
 **Key takeaway:** Grid DFS is for connectivity and area problems. Modify the grid in-place to mark visited cells (or use a separate visited array if you can't modify the input). Think of the grid as a graph where each cell connects to its 4 neighbors.
+
+#### Real World
+> **[GIS / mapping software]** — Geographic information systems like ArcGIS use flood-fill DFS to identify contiguous land regions, water bodies, or forest areas in satellite imagery grids, which is exactly the "number of islands" pattern applied to raster data.
+
+#### Practice
+1. Given an m×n grid of '1's (land) and '0's (water), count the number of islands (Number of Islands / LeetCode 200).
+2. Given a 2D grid, find the island with the maximum area, where area is the number of connected '1' cells (Max Area of Island / LeetCode 695).
+3. What is the trade-off between modifying the grid in-place to mark visited cells versus using a separate visited set, and when is each approach preferable?
 
 ### DFS Backtracking
 
@@ -1002,6 +1042,14 @@ function solveNQueens(n: number): string[][] {
 
 **Key takeaway:** Every backtracking problem is a DFS on a decision tree. The pattern is always CHOOSE → EXPLORE → UNCHOOSE. The key is defining what "choices" exist at each step and what makes a solution valid.
 
+#### Real World
+> **[Puzzle games / AI solvers]** — Sudoku-solving apps and crossword generators use DFS backtracking: place a value, check constraints, recurse deeper, undo if stuck. The same framework powers AI move search in chess (minimax) and puzzle verification in interview prep tools.
+
+#### Practice
+1. Given a 2D board and a word, determine if the word exists in the grid by following adjacent (up/down/left/right) cells. Each cell may be used at most once (Word Search / LeetCode 79).
+2. Given a string containing only '(' and ')', remove the minimum number of invalid parentheses to make the input valid. Return all possible results (Remove Invalid Parentheses).
+3. Why is the UNCHOOSE step critical when using a shared mutable array for the current path — what specific bug occurs if you skip it, and on which type of problem does it manifest?
+
 ### Pruning Strategies
 
 Pruning is the art of cutting off branches of the decision tree that **cannot possibly lead to a valid solution**. Without pruning, backtracking is brute force. With good pruning, it becomes practical.
@@ -1106,6 +1154,14 @@ function exist(board: string[][], word: string): boolean {
 
 **Key takeaway:** Always sort input when possible (enables early termination). Skip duplicates to avoid redundant work. Check constraints before recursing, not after. Good pruning is the difference between TLE and AC.
 
+#### Real World
+> **[SAT solvers / formal verification]** — Industrial SAT solvers like MiniSat and Z3 use sophisticated pruning (unit propagation, conflict-driven clause learning) on top of backtracking search, reducing the effective search space from 2^n to tractable sizes for problems with thousands of variables.
+
+#### Practice
+1. Given a sorted array of candidate numbers and a target, find all combinations that sum to the target where each candidate is used at most once. How does sorting enable early `break` pruning?
+2. Given a string, partition it such that every substring is a palindrome. Return all such partitions (Palindrome Partitioning). What early-exit condition can prune non-palindrome prefixes before recursing?
+3. Duplicate-input pruning in combinations requires `i > start && nums[i] === nums[i-1]` to skip. Why does the condition `i > start` (not `i > 0`) matter, and what incorrect result would appear without it?
+
 ### BFS vs DFS Comparison
 
 Understanding when to use BFS vs DFS is one of the most important skills in algorithm interviews. Here's the complete comparison.
@@ -1202,6 +1258,14 @@ flowchart TD
 | Minimum Knight Moves | Generate Parentheses |
 
 **Key takeaway:** BFS = shortest path / level-order. DFS = all paths / backtracking / cycles / connectivity. When in doubt, ask yourself: "Do I need the shortest or all possibilities?" That determines the choice.
+
+#### Real World
+> **[Robotics / pathfinding]** — Autonomous robots use BFS for shortest-path navigation on obstacle maps while using DFS-based backtracking for configuration-space exploration when planning arm movements — the choice between them directly impacts real-time performance of the robot's motion planner.
+
+#### Practice
+1. Given a start word, end word, and word list, find the length of the shortest transformation sequence where each step changes exactly one letter (Word Ladder / LeetCode 127). Why is BFS the right choice here over DFS?
+2. You have a lock with 4 wheels (0–9) and a list of deadend combinations. Find the minimum number of turns to reach the target from "0000" (Open the Lock). Model and solve this with BFS.
+3. For the Word Ladder problem, why does DFS not guarantee the shortest path even if it finds a valid path, and what additional overhead would be needed to make DFS give the correct answer?
 
 ## ELI5
 

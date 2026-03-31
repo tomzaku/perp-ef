@@ -21,12 +21,28 @@ Dynamic Programming — DP — is a powerful algorithmic technique that solves c
 
 **Optimal Substructure** means the optimal solution to a problem can be constructed from optimal solutions of its subproblems. **Overlapping Subproblems** means the same subproblems are encountered repeatedly during recursion.
 
+#### Real World
+> **[Bioinformatics]** — Sequence alignment tools like BLAST use DP (Smith-Waterman algorithm) to find the optimal local alignment between two DNA or protein sequences, with the recurrence table being the cornerstone of computational biology at scale.
+
+#### Practice
+1. Given a string, find the length of the longest palindromic subsequence. Define the DP state and write the recurrence relation.
+2. Given two strings, find the length of their longest common subsequence (LCS). What does `dp[i][j]` represent in your table?
+3. How do you recognize whether a problem has "overlapping subproblems" before writing any code, and what is the tell-tale sign in its recursion tree?
+
 ### Top-Down vs Bottom-Up
 
 There are two classic approaches:
 
 - **Memoization — Top-Down**: Start from the original problem, recurse into subproblems, and cache results in a hash map or array. This is intuitive because it mirrors the recursive definition.
 - **Tabulation — Bottom-Up**: Build a table starting from the smallest subproblems and iteratively fill in larger ones. This avoids recursion overhead and is often more space-efficient.
+
+#### Real World
+> **[Compilers / JIT optimization]** — Modern JIT compilers (like V8 for JavaScript) use memoized type inference: each expression's type is computed once and cached, avoiding exponential re-derivation in deeply nested generic code.
+
+#### Practice
+1. Implement Fibonacci using top-down memoization. Then rewrite it bottom-up. Which uses less space, and why?
+2. Given a staircase with n steps where you can climb 1 or 2 steps at a time, count the number of ways to reach the top. Solve both top-down and bottom-up.
+3. When would you prefer top-down memoization over bottom-up tabulation in a production system, considering call stack depth limits and cache miss patterns?
 
 ```mermaid
 flowchart TD
@@ -48,6 +64,14 @@ flowchart TD
 4. **Determine traversal order**: Ensure that when you compute `dp[i]`, all subproblems it depends on are already solved.
 5. **Optimize space if possible**: Often you only need the last one or two rows of the table, reducing space from O(n^2) to O(n).
 
+#### Real World
+> **[Natural language processing]** — The Viterbi algorithm for part-of-speech tagging follows this exact recipe: state = (word index, POS tag), recurrence = max over previous tags, base case = first word probabilities. It powers POS tagging in production NLP pipelines.
+
+#### Practice
+1. Given an array of integers, find the length of the longest strictly increasing subsequence (LIS). What is the DP state, recurrence, and time complexity of the O(n²) solution?
+2. Given a string, partition it so that every substring is a palindrome. Find the minimum number of cuts needed (Palindrome Partitioning II).
+3. How do you determine the right traversal order when filling a 2D DP table — specifically, when should you iterate left-to-right vs right-to-left over the capacity dimension?
+
 ### Common DP Families
 
 - **Linear DP**: Longest Increasing Subsequence, House Robber
@@ -57,6 +81,14 @@ flowchart TD
 - **String DP**: Edit Distance, Longest Common Subsequence
 
 The key insight is always the same: if you find yourself solving the same subproblem multiple times, DP can help. Start by writing the brute-force recursion, spot the repeated work, then add caching.
+
+#### Real World
+> **[E-commerce / resource planning]** — The 0/1 knapsack problem directly models inventory selection: which products to stock given warehouse capacity constraints to maximize expected profit. This is solved with DP at companies like Amazon's fulfillment planning teams.
+
+#### Practice
+1. Given a set of items each with a weight and a value, and a knapsack with a weight limit, find the maximum value you can carry (0/1 Knapsack).
+2. Given an array of integers and a target sum, determine if any subset sums to the target (Subset Sum). Reduce it to a knapsack variant.
+3. What is the key difference between 0/1 Knapsack and Unbounded Knapsack in terms of the DP traversal order, and why does iterating backwards avoid reusing items?
 
 ## ELI5
 

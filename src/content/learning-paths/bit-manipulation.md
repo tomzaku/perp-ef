@@ -29,6 +29,14 @@ Bit manipulation operates directly on the binary representation of numbers using
 | Left Shift | `<<` | `101 << 1` | `1010` (10) |
 | Right Shift | `>>` | `101 >> 1` | `10` (2) |
 
+#### Real World
+> **[Linux kernel / embedded systems]** — Permission flags in Unix (read=4, write=2, execute=1) are stored as bitmasks and checked with AND in a single CPU instruction, avoiding any branching or data structure overhead at the OS level.
+
+#### Practice
+1. Given a 32-bit integer, return the number of 1 bits it has (Hamming weight / popcount).
+2. Given an integer n, determine whether it is a power of two. Solve in O(1) without using any loops.
+3. Why does `n & (n-1)` clear the lowest set bit rather than some other bit, and what property of two's complement arithmetic makes this true?
+
 ### Essential Tricks
 
 **1. XOR Properties:**
@@ -61,6 +69,14 @@ n & ~(1 << i)  // clear i-th bit
 n ^ (1 << i)   // toggle i-th bit
 ```
 
+#### Real World
+> **[Cryptography / hashing]** — XOR is the core operation in stream ciphers and one-time pads: XOR a plaintext byte with a key byte to encrypt, XOR again with the same key to decrypt — a reversible, branchless operation used in AES and many hash functions.
+
+#### Practice
+1. Given a non-empty array of integers where every element appears twice except for one, find the single element. Solve in O(n) time and O(1) space using XOR.
+2. Given an array where every element appears three times except one, find the unique element. How does the approach change from the "appears twice" variant?
+3. How would you use XOR to swap two integer variables in-place without a temporary variable, and what edge case makes this approach risky?
+
 ### Common Patterns
 
 **Find unique element:** XOR all elements — duplicates cancel, unique remains.
@@ -71,9 +87,25 @@ n ^ (1 << i)   // toggle i-th bit
 
 **Missing number:** XOR indices 0..n with all array elements — the missing one survives.
 
+#### Real World
+> **[Game development / graphics]** — Sprite rendering engines use bitmasks to encode which tiles are visible or dirty in a tilemap, enabling O(1) bulk updates via OR and single-instruction checks via AND instead of iterating each tile.
+
+#### Practice
+1. Given an array containing n distinct numbers taken from 0 to n, find the one missing number. Solve using XOR in O(n) time and O(1) space.
+2. Given an array where two elements appear once and all others appear twice, find those two unique elements. How do you split them into two separate XOR groups?
+3. Why is the XOR-based "add without +" approach for arbitrary integers inherently iterative rather than constant-time on a real CPU?
+
 ### Complexity
 
 Bit operations are O(1) per operation (on fixed-width integers). Problems typically run in O(n) time scanning the array and O(1) extra space — the key advantage over hash-based approaches.
+
+#### Real World
+> **[Distributed systems]** — Bloom filters use bit arrays with multiple hash functions to test set membership in O(1) time with zero false negatives — a direct application of bit manipulation that powers duplicate URL detection in web crawlers at Google scale.
+
+#### Practice
+1. Given an integer, add one to it without using the `+` operator. Use bit manipulation to implement the increment.
+2. Given an array of integers and a number k, return all subsets of size k. Enumerate subsets using bitmasks over an n-element array.
+3. When would you choose a hash set over a bitset for membership testing, and what are the memory and speed trade-offs at n = 10^6 elements?
 
 ## ELI5
 

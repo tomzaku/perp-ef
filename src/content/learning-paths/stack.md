@@ -21,11 +21,27 @@ A stack is a Last-In-First-Out structure that excels at problems involving match
 
 The classic application is validating balanced parentheses. Push opening brackets onto the stack; when you encounter a closing bracket, pop and verify it matches. If the stack is empty at the end, the input is valid. This extends to any nesting structure: HTML tags, nested function calls, or expression evaluation.
 
+#### Real World
+> **[Compilers / parsers]** — Every compiler and browser HTML parser uses a stack to validate and evaluate nested structures: XML/HTML tag matching, JSON brace pairing, and expression parsing all rely on the same push-on-open, pop-on-close stack pattern.
+
+#### Practice
+1. Given a string containing just '(', ')', '[', ']', '{', '}', determine if the input string is valid (Valid Parentheses / LeetCode 20). Solve using a stack.
+2. Given an absolute Unix file path, simplify it (remove `.`, `..`, and extra `/`) by processing each component with a stack (Simplify Path / LeetCode 71).
+3. In the valid parentheses problem, why is checking `stack.length === 0` at the end (in addition to the mismatch check inside the loop) necessary? What input would fail without that final check?
+
 ### Monotonic Stack
 
 A monotonic stack maintains elements in sorted order — either strictly increasing or strictly decreasing. As you iterate through an array, you pop elements that violate the monotonic property, and each pop reveals a relationship like "next greater element" or "next smaller element."
 
 This solves problems like daily temperatures, stock span, largest rectangle in histogram, and trapping rain water. The key insight: each element is pushed and popped at most once, so the total time is O(n).
+
+#### Real World
+> **[Financial analytics]** — Stock market dashboards compute the "stock span" (number of consecutive prior days the price was less than or equal to today's price) using a monotonic stack, enabling O(n) computation of spans across years of daily prices for visualization tools at Bloomberg and financial data providers.
+
+#### Practice
+1. Given an array of daily temperatures, find for each day the number of days until a warmer temperature (Daily Temperatures / LeetCode 739). Solve using a monotonic stack storing indices.
+2. Given heights of bars in a histogram, find the largest rectangle that can be formed (Largest Rectangle in Histogram / LeetCode 84). Explain how the monotonic stack identifies the left and right boundaries.
+3. Monotonic stacks store indices rather than values in most implementations. Why is storing indices more powerful than storing values, and give a problem where storing only the value would fail?
 
 ```mermaid
 flowchart TD
@@ -40,13 +56,37 @@ flowchart TD
 
 Stacks naturally handle expression parsing. Use one stack for operators and one for operands, or convert infix to postfix notation. The stack tracks pending operations, resolving them when a higher-priority operator or closing bracket appears.
 
+#### Real World
+> **[Spreadsheet engines / calculators]** — Google Sheets and Excel use the Shunting-Yard algorithm (operator + operand stacks) to evaluate formulas like `=SUM(A1*(B2+C3))`. The same two-stack approach powers calculators, expression evaluators in programming languages, and query plan generators in databases.
+
+#### Practice
+1. Evaluate a Reverse Polish Notation (postfix) expression — numbers and operators in an array. Use a single stack to evaluate in O(n) (Evaluate Reverse Polish Notation / LeetCode 150).
+2. Implement a basic calculator that evaluates a string containing digits, `+`, `-`, and parentheses (Basic Calculator / LeetCode 224). How do parentheses interact with the operator stack?
+3. Why is postfix (RPN) notation easier to evaluate with a stack than infix notation? What property of postfix eliminates the need to handle operator precedence during evaluation?
+
 ### Complexity
 
 Stack-based solutions are typically O(n) time and O(n) space. Despite the nested-looking while loop inside the for loop, each element is pushed and popped at most once, giving amortized O(1) per operation.
 
+#### Real World
+> **[Interview preparation platforms]** — Understanding the amortized O(1) analysis of stacks is a commonly tested concept at Google, Meta, and Amazon interviews. Recognizing that O(n) total push/pop operations within an O(n) loop does not make the algorithm O(n²) is a key insight distinguishing strong candidates.
+
+#### Practice
+1. Given a circular array of temperatures, find the next warmer day for each position, wrapping around if needed (Next Greater Element II / LeetCode 503). How do you handle the circular structure with a stack?
+2. Given an array of non-negative integers representing an elevation map, compute how much water it can trap after raining (Trapping Rain Water / LeetCode 42). Solve using a monotonic stack.
+3. The monotonic stack processes each element at most twice (one push, one pop). Explain this amortized argument and why the outer `for` loop with an inner `while` loop is still O(n) overall.
+
 ### Recognition Pattern
 
 If the problem involves nesting, matching pairs, "previous or next greater or smaller," or needs to track a history that unwinds in reverse order, think stack.
+
+#### Real World
+> **[Version control / undo history]** — Text editors and IDEs implement undo/redo with two stacks: operations are pushed onto the undo stack, and "undo" pops from it onto the redo stack. This LIFO structure perfectly models the "reverse the last action" behavior users expect.
+
+#### Practice
+1. Given a series of directory navigation commands (`cd dir`, `cd ..`, `cd /`), determine the minimum number of operations to return to the main folder (Crawler Log Folder / LeetCode 1598). What pattern does this map to?
+2. Design a stack that supports `push`, `pop`, `top`, and `getMin` operations all in O(1) time (Min Stack / LeetCode 155). What auxiliary structure is needed?
+3. Given the patterns you've seen (matching, monotonic, expression evaluation), describe a structured approach to recognizing which stack variant a new problem requires, before writing any code.
 
 ## ELI5
 

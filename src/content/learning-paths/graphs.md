@@ -158,6 +158,14 @@ Edges: [[0,1], [2,3]]   with n = 5
 | Network Delay Time (LC 743) | Weighted directed graph |
 | Graph Valid Tree (LC 261) | Undirected; check V-1 edges + connectivity |
 
+#### Real World
+> **[Social networks]** — Facebook's friend graph is stored as an adjacency list (sparse graph with ~150 friends per user on average) rather than a matrix. An adjacency matrix for 3 billion users would require 9 × 10^18 bytes — impossible — while the list uses only O(V + E) space.
+
+#### Practice
+1. Given n nodes and a list of edges, build an undirected adjacency list. Then count the number of connected components in the graph.
+2. Given a directed graph as an edge list, build a directed adjacency list. Then detect whether the graph contains a cycle.
+3. When is an adjacency matrix preferable to an adjacency list, and what specific operation does the matrix make O(1) that the list does not?
+
 ---
 
 ### BFS — Breadth-First Search
@@ -173,6 +181,14 @@ For a full deep dive with step-by-step walkthroughs, level-order processing, gri
 - Any problem asking for "minimum number of moves/steps"
 
 **Key reminder:** Always mark nodes as visited **when enqueuing**, not when dequeuing, to avoid duplicate processing.
+
+#### Real World
+> **[Mapping / GPS]** — Google Maps uses BFS (or Dijkstra on weighted graphs) for shortest-path queries. For unweighted problems like "find all locations within 2 hops of this transit stop," pure BFS gives exact level-by-level distances in O(V + E) time.
+
+#### Practice
+1. Given an undirected graph and a starting node, write BFS to find the shortest path (in number of edges) to every other reachable node.
+2. Given a binary tree, return the values of the nodes you can see from the right side (Right Side View / LeetCode 199). Which traversal order gives you the rightmost node at each level?
+3. How does the time complexity of BFS change when the graph is dense (E ≈ V²) versus sparse (E ≈ V), and does the asymptotic form O(V + E) still hold?
 
 ---
 
@@ -190,6 +206,14 @@ For a full deep dive with backtracking patterns, grid DFS, and advanced variants
 - Finding connected components
 
 **Key reminder:** For cycle detection in directed graphs, you need three states: unvisited, in-progress (on current recursion stack), and completed. A back-edge to an in-progress node means a cycle exists.
+
+#### Real World
+> **[Fraud detection]** — Payment networks use DFS to trace transaction chains and detect circular fund flows (cycles in a directed graph of money transfers), a signal for money laundering that would be missed by BFS since BFS does not naturally detect back-edges.
+
+#### Practice
+1. Given a directed graph, determine if there is a valid path between a source node and a destination node (Find if Path Exists in Graph / LeetCode 1971). Solve with both DFS and BFS.
+2. Given a directed graph, use DFS with three-color marking (white/gray/black) to detect whether the graph contains any cycles.
+3. Why does DFS cycle detection in a directed graph require the "gray" (in-progress) state in addition to "visited"? Give an example where a two-state approach produces a false positive.
 
 ---
 
@@ -438,6 +462,14 @@ function dfsTopologicalSort(n: number, edges: number[][]): number[] {
 | Parallel Courses (LC 1136) | Kahn's level-by-level; answer = number of levels |
 | Sequence Reconstruction (LC 444) | Unique topo order — at each step, queue has exactly 1 node |
 
+#### Real World
+> **[Build systems]** — Tools like Bazel, Make, and Webpack use topological sort to determine compilation order: a module must be compiled before anything that imports it. A cycle (circular import) means no valid build order exists — exactly what Kahn's algorithm detects.
+
+#### Practice
+1. There are n courses labeled 0 to n-1 with prerequisite pairs. Determine if you can finish all courses (Course Schedule / LeetCode 207). Implement using Kahn's algorithm.
+2. Return a valid order to finish all courses (Course Schedule II / LeetCode 210). What does it mean when Kahn's result has fewer than n nodes?
+3. What is the difference between the order produced by Kahn's algorithm and DFS-based topological sort? Can both produce the lexicographically smallest valid ordering, and if so, how?
+
 ---
 
 ### Union-Find (Disjoint Set Union)
@@ -654,6 +686,14 @@ Walkthrough:
 | Longest Consecutive Sequence (LC 128) | Union consecutive numbers, find largest component |
 | Smallest String With Swaps (LC 1202) | Union swap indices, sort characters within each component |
 
+#### Real World
+> **[Network infrastructure]** — Internet routing protocols use Union-Find style logic to track which network segments are connected. When a link is added or removed, Union-Find updates connectivity in near O(1) time rather than re-running full BFS/DFS from scratch.
+
+#### Practice
+1. Given n nodes and a list of edges, implement Union-Find with path compression and union by rank. Return the number of connected components.
+2. Given n nodes and edges added one at a time, find the first edge that creates a cycle (Redundant Connection / LeetCode 684).
+3. Why does Union-Find need both path compression AND union by rank to achieve near-O(1) per operation? What happens to performance if you use only one optimization?
+
 ---
 
 ### Connected Components
@@ -824,6 +864,14 @@ function numIslands(grid: string[][]): number {
 | Number of Islands II (LC 305) | Union-Find for dynamic island creation |
 | Max Area of Island (LC 695) | DFS; track size of each component |
 | Surrounded Regions (LC 130) | DFS from border 'O' cells; rest are captured |
+
+#### Real World
+> **[Epidemiology / contact tracing]** — COVID contact tracing apps modeled exposure networks as undirected graphs and used connected-component analysis to identify clusters of possible transmission, informing quarantine decisions at public health agencies.
+
+#### Practice
+1. Given a list of accounts where each entry is a name followed by emails, merge accounts sharing any email into one. Return the merged accounts (Accounts Merge / LeetCode 721).
+2. Given an m×n grid of '1's and '0's, count the number of islands. Can you solve this with both DFS and Union-Find, and which is simpler to implement on a grid?
+3. When should you prefer Union-Find over DFS for connected components, specifically considering the scenario where edges are added dynamically over time?
 
 ---
 

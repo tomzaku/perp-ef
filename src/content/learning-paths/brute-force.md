@@ -33,6 +33,14 @@ Nearly every backtracking problem follows the same three-step pattern:
 
 This framework generates a decision tree. Each node is a partial solution, and each branch is a choice. Backtracking prunes entire subtrees when constraints are violated.
 
+#### Real World
+> **[Constraint solvers / scheduling]** — Automated employee scheduling tools at companies like Workday use backtracking with constraint propagation to assign shifts while satisfying hundreds of labor rules — the same choose-explore-unchoose pattern applied to real-world planning.
+
+#### Practice
+1. Given a collection of candidate numbers and a target, find all unique combinations that sum to the target (Combination Sum). Each number may be used unlimited times.
+2. Given a string containing digits 2-9, return all letter combinations it could represent on a phone keypad (Letter Combinations of a Phone Number).
+3. What is the difference between the decision tree for subsets (collect at every node) and permutations (collect only at leaves), and why does this affect the base case?
+
 ```mermaid
 flowchart TD
     A["Start: empty solution"] --> B["CHOOSE candidate for position i"]
@@ -51,17 +59,49 @@ flowchart TD
 
 Generate all orderings of n elements. At each step, choose an unused element, mark it as used, recurse, then unmark it. The decision tree has n! leaves. Use a `used` boolean array or swap elements in place.
 
+#### Real World
+> **[Logistics / operations research]** — Generating all permutations is the brute-force baseline for the Traveling Salesman Problem. At n=12 cities, it is feasible (12! ≈ 479M); at n=20 it becomes intractable, motivating heuristic algorithms like nearest-neighbor or branch-and-bound.
+
+#### Practice
+1. Given an array of distinct integers, return all possible permutations.
+2. Given an array that may contain duplicates, return all unique permutations. How do you avoid generating identical permutations?
+3. The decision tree for permutations has n! leaves and n×n! total nodes. Why does storing each permutation still give O(n × n!) overall space complexity, not O(n!)?
+
 ### Combinations
 
 Generate all subsets of size k from n elements. To avoid duplicates, enforce an ordering: each recursive call starts from the index after the last chosen element. The decision tree has C(n,k) leaves.
+
+#### Real World
+> **[Machine learning / feature selection]** — Evaluating every subset of k features from n candidates is an exact O(C(n,k)) backtracking problem. For n=20 and k=5 this is manageable (~15K combos); for larger n, heuristic search replaces brute-force enumeration.
+
+#### Practice
+1. Given two integers n and k, return all combinations of k numbers from the range 1 to n.
+2. Given a set of candidate numbers with possible duplicates, find all unique combinations that sum to a target (Combination Sum II — each number used at most once).
+3. Why is enforcing that each call starts from `i + 1` (not just any unused index) the key to avoiding duplicate combinations in the output?
 
 ### Subsets
 
 Generate all 2^n subsets. At each index, make a binary choice: include the element or skip it. Alternatively, iterate and at each level branch into "take" or "leave."
 
+#### Real World
+> **[Power set / privacy engineering]** — Privacy tools that enumerate all data-sharing permission combinations for a user's profile (share with A? share with B? etc.) are literally computing subsets — manageable up to ~20 attributes, then requiring approximation.
+
+#### Practice
+1. Given an integer array of unique elements, return all possible subsets (the power set). No duplicates in the output.
+2. Given an array with possible duplicates, return all unique subsets. What preprocessing step and skip condition are needed?
+3. There are two equivalent ways to generate subsets: recursion (include/exclude) and iteration (bitmask from 0 to 2^n-1). When would you prefer the bitmask approach over the recursive approach?
+
 ### Constraint Satisfaction
 
 Problems like N-Queens, Sudoku, and crossword puzzles are constraint satisfaction problems. The backtracking template is the same, but the "satisfies constraints?" check does the heavy lifting — rejecting invalid placements early.
+
+#### Real World
+> **[Compiler register allocation]** — Assigning CPU registers to variables is a graph coloring problem — a classic constraint satisfaction problem solved in practice with backtracking plus heuristics, where each "color" is a register and constraints are live-variable conflicts.
+
+#### Practice
+1. Place N queens on an N×N chessboard such that no two queens attack each other. Return the total number of distinct solutions (N-Queens II).
+2. Write a Sudoku solver that fills in a 9×9 board by trying digits 1–9 in each empty cell and backtracking when a constraint is violated.
+3. What pruning techniques make the N-Queens solver dramatically faster than the naive "try all N^N placements" approach, and why does column/diagonal tracking matter?
 
 ### Optimization Tips
 
@@ -71,6 +111,14 @@ Problems like N-Queens, Sudoku, and crossword puzzles are constraint satisfactio
 - **Avoid duplicates**: when the input contains duplicates, sort first and skip consecutive identical elements at the same recursion level.
 
 Backtracking is your universal fallback. When no greedy or DP approach works, backtracking will always find the answer — the question is just whether it is fast enough.
+
+#### Real World
+> **[Game AI / puzzle solvers]** — Chess engines like Stockfish combine backtracking (minimax search) with aggressive pruning (alpha-beta) to reduce the effective branching factor from ~35 to ~6, making the search tractable. The optimization tips here — sort, use bitmasks, prune early — are exactly what separates amateur from production backtracking.
+
+#### Practice
+1. Given a list of words forming a word ladder, how would you use DFS with backtracking to find ALL paths from the start word to the end word, not just the shortest? What pruning prevents revisiting?
+2. Given a Sudoku board, implement a solver that uses forward-checking as a pruning strategy: before recursing, verify that each unfilled cell still has at least one valid digit.
+3. When would you choose bitmask representation over a `used[]` boolean array for tracking chosen elements, and what is the practical performance difference for n ≤ 20?
 
 ## ELI5
 

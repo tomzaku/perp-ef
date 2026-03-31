@@ -130,6 +130,14 @@ GET    /api/v2/users
 
 **Key takeaway:** The request lifecycle is a pipeline. Each layer has a single responsibility. Understanding the full flow — from DNS to response — helps you debug issues at any point in the chain.
 
+#### Real World
+> **Shopify** — During Black Friday flash sales, Shopify traced request lifecycle bottlenecks to middleware executing redundant session lookups on every request. They moved session deserialization into a lazy-load pattern, cutting P99 latency by 40ms under peak load.
+
+#### Practice
+1. A GET request to `/api/users/42` returns a 401 even though the user exists. Walk through every stage of the request lifecycle where this could be failing.
+2. Your API is returning 503s but your application servers look healthy. Given that you have a load balancer and multiple app servers, what would you check and in what order?
+3. Why is `PATCH /users/42` considered non-idempotent while `PUT /users/42` is idempotent, and when would this distinction matter in API design?
+
 ### Data Access Patterns
 
 How your application talks to the database is one of the most impactful architectural decisions. The spectrum ranges from raw SQL (maximum control) to full ORMs (maximum productivity), with query builders in between.
@@ -297,6 +305,14 @@ class PrismaUserRepository implements UserRepository {
 | Best for | Complex queries | Dynamic filters | CRUD apps |
 
 **Key takeaway:** Most teams use an ORM for standard CRUD and drop to raw SQL or a query builder for complex queries. Don't fight the ORM — if a query is hard to express, just write SQL.
+
+#### Real World
+> **GitHub** — GitHub's early Rails codebase suffered severe N+1 query problems when rendering pull request pages that loaded contributors, reviewers, and comment authors. They introduced eager loading via `includes` and later migrated hot paths to raw SQL, bringing page load times from 2s down to under 300ms.
+
+#### Practice
+1. You notice an endpoint that lists 50 blog posts with their authors is making 51 database queries. What is this pattern called, and how do you fix it?
+2. You're building a reporting dashboard that needs to aggregate orders by region, month, and product category with complex filters. Given the tradeoffs of ORM vs raw SQL, which would you choose and why?
+3. What are the tradeoffs of using the Repository pattern — what does it cost you and what does it protect you from?
 
 ### Async Processing
 
@@ -487,6 +503,14 @@ Reads  → Query Model (denormalized, Elasticsearch/Redis)
 
 **Key takeaway:** Use background jobs for slow operations, message queues for decoupling services. Design consumers to be idempotent since messages may be delivered more than once. Start simple (BullMQ) and add Kafka only when you need event streaming at scale.
 
+#### Real World
+> **Uber** — Uber's payment processing pipeline used direct synchronous calls between services, causing cascading failures when downstream systems slowed down. They migrated to Kafka-based async messaging for post-payment events (receipts, driver payouts, analytics), which isolated failures and allowed each consumer to scale independently.
+
+#### Practice
+1. Your `/export-csv` endpoint times out for large datasets. The export takes 30–90 seconds. How would you redesign this flow using async processing, and what HTTP status code do you return immediately?
+2. Given a payment event that triggers both an email receipt and an accounting ledger update, what delivery guarantee (at-most-once, at-least-once, exactly-once) would you require for each, and why?
+3. Why must message queue consumers be idempotent when using at-least-once delivery, and what is a concrete strategy for achieving idempotency in a payment processing consumer?
+
 ### Monolith vs Microservices
 
 This is one of the most debated topics in backend engineering. The answer is almost always: **start with a monolith**, extract microservices only when you have a specific reason.
@@ -675,6 +699,14 @@ Stage 4: Extract more as needed
 ```
 
 **Key takeaway:** The monolith is not the enemy — a poorly structured monolith is. Build a well-organized modular monolith first. Extract microservices only when you have a concrete scaling, deployment, or team autonomy problem that the monolith can't solve.
+
+#### Real World
+> **Amazon** — Amazon's original monolith became a deployment bottleneck as hundreds of engineers worked in a single codebase. A 2-pizza-team structure forced them to decompose into services — each team owned their service end-to-end. This is the origin of AWS: internal service platforms became external products.
+
+#### Practice
+1. Your monolith has a `recommendations` module that runs expensive ML inference and needs to deploy multiple times a day while the rest of the app ships weekly. Is this a good candidate for extraction into a microservice? What signals would confirm or deny this?
+2. Given a distributed order flow spanning Order, Payment, and Inventory services with no shared database, how would you handle the case where payment succeeds but inventory reservation fails?
+3. What are the hidden operational costs of microservices that a team only discovers after extraction, and how do these change the break-even point for when microservices are worth it?
 
 ## ELI5
 

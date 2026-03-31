@@ -30,6 +30,14 @@ Greedy works when the problem has two properties:
 - **Greedy Choice Property**: A locally optimal choice can always be part of some globally optimal solution.
 - **Optimal Substructure**: After making the greedy choice, the remaining problem is a smaller instance of the same type.
 
+#### Real World
+> **[Network engineering]** — Huffman coding, used in JPEG and gzip compression, is a greedy algorithm: always merge the two least-frequent symbols first. This provably produces the optimal prefix-free code and is deployed in virtually every file compression format.
+
+#### Practice
+1. Given an array of positive integers representing jump lengths, determine if you can reach the last index from the first (Jump Game / LeetCode 55). Solve with a greedy "max reach" approach.
+2. Given an array of jump lengths, find the minimum number of jumps to reach the last index (Jump Game II / LeetCode 45). Why does greedy work here?
+3. How do you prove a greedy algorithm is correct using the exchange argument? Walk through the proof for the "earliest-deadline-first" interval scheduling problem.
+
 ### The Exchange Argument Proof
 
 The most common technique for proving a greedy algorithm correct is the **exchange argument**:
@@ -50,6 +58,14 @@ flowchart TD
     D -->|"Yes"| H["Greedy does NOT work for this problem"]
 ```
 
+#### Real World
+> **[Algorithm research / competitive programming]** — The exchange argument proof is taught at Stanford, MIT, and CMU as the standard technique to validate greedy solutions. When engineers at top companies propose a greedy optimization in production systems, this is the mental model they use to verify correctness before deployment.
+
+#### Practice
+1. Given a list of non-overlapping intervals sorted by start time, insert a new interval and merge if necessary (Insert Interval / LeetCode 57). Trace through the greedy choices and verify the result.
+2. Given intervals, find the minimum number of meeting rooms required to host all meetings simultaneously (Meeting Rooms II). Apply greedy with a min-heap.
+3. Construct a counterexample showing that greedy-by-start-time (earliest start first) does NOT maximize the number of non-overlapping intervals, but greedy-by-end-time does.
+
 ### Classic Greedy Problems
 
 **Interval Scheduling — Activity Selection**: Given intervals, select the maximum number of non-overlapping ones. Greedy strategy: always pick the interval that ends earliest. Sort by end time, greedily select, skip overlapping.
@@ -62,9 +78,25 @@ flowchart TD
 
 **Task Scheduling with Deadlines**: Sort tasks by deadline and use a priority queue to decide which tasks to drop when conflicts arise.
 
+#### Real World
+> **[Wireless networking]** — The greedy "earliest-deadline-first" scheduling algorithm is used in real-time operating systems and wireless MAC protocols to allocate time slots, because it provably minimizes deadline misses — a direct application of the interval scheduling greedy approach.
+
+#### Practice
+1. Given a list of intervals, find the minimum number of intervals to remove so that the remaining intervals are non-overlapping (Non-overlapping Intervals / LeetCode 435).
+2. Given a string, find the lengths of the maximum number of non-overlapping partitions such that each letter appears in at most one partition (Partition Labels / LeetCode 763).
+3. Why does Huffman coding produce an optimal prefix-free code? What property of the problem guarantees that the greedy merge (two smallest frequencies first) is always correct?
+
 ### Greedy vs DP
 
 If a problem has overlapping subproblems and you cannot prove the greedy choice property, you likely need DP. A good heuristic: if you find a counterexample where the greedy choice leads to a suboptimal result, switch to DP or backtracking.
+
+#### Real World
+> **[Game theory / auctions]** — Online ad auctions at Google and Meta use greedy bidding strategies as baselines, but switch to DP-based optimal bidding when bidder budgets create overlapping subproblems that violate the greedy choice property.
+
+#### Practice
+1. Given an array of coin denominations and an amount, find the minimum number of coins to make the amount (Coin Change). Does greedy work? If not, what counterexample breaks it?
+2. Given an array of non-negative integers representing house robbery values (adjacent houses can't both be robbed), find the maximum amount you can rob (House Robber). Is this greedy or DP?
+3. How do you decide at the start of a problem whether to attempt greedy or jump straight to DP? What signals in the problem statement suggest that greedy will fail?
 
 ### Tips for Interviews
 
@@ -72,6 +104,14 @@ If a problem has overlapping subproblems and you cannot prove the greedy choice 
 - Briefly argue why it works — the interviewer wants to hear your reasoning.
 - Sorting is almost always the first step in a greedy solution.
 - When in doubt, try to construct a counterexample. If you cannot, greedy is likely correct.
+
+#### Real World
+> **[System design interviews]** — Meta, Google, and Amazon interviewers specifically test whether candidates can identify when greedy is sufficient versus when DP is required. Stating "I'll try greedy first and verify with an exchange argument" demonstrates the reasoning they look for in senior engineering roles.
+
+#### Practice
+1. Given a list of tasks with cooldown periods, find the minimum time needed to finish all tasks with at least n cooldown units between the same tasks (Task Scheduler / LeetCode 621). Argue why the greedy approach (always schedule the most frequent remaining task) is correct.
+2. Given a string of characters, rearrange it so that no two adjacent characters are the same. Return the rearranged string or "" if impossible (Reorganize String / LeetCode 767).
+3. In an interview, you propose a greedy solution and the interviewer asks you to prove it. Walk through the exchange argument: what is the structure of the proof, and what specifically must you show at the "swap" step?
 
 ## ELI5
 

@@ -21,6 +21,14 @@ A heap is a specialized tree-based data structure that satisfies the heap proper
 
 Heaps power the **priority queue** abstract data type, which appears in a remarkable number of algorithm problems. Whenever a problem asks for the "K-th largest," "top K elements," "merge K sorted lists," or "running median," a heap is almost certainly the right tool.
 
+#### Real World
+> **[Operating systems / process scheduling]** — OS schedulers like the Linux CFS (Completely Fair Scheduler) use a red-black tree (functionally similar to a heap) to always pick the process with the smallest virtual runtime in O(log n), enabling fair CPU time distribution across thousands of processes.
+
+#### Practice
+1. Given an integer array and an integer k, return the k-th largest element in the array. Solve in O(n log k) using a min-heap.
+2. Given a list of k sorted linked lists, merge them all into one sorted list (Merge K Sorted Lists / LeetCode 23). Use a min-heap to pick the smallest head across lists.
+3. A min-heap of size k holds the k-th largest element at its top. Why does inserting and then popping (when size > k) work correctly, and what is the invariant being maintained?
+
 ```mermaid
 flowchart TD
     A["Problem requires extreme element"] --> B{"What kind?"}
@@ -39,6 +47,14 @@ flowchart TD
 - **Peek**: Return the root — O(1).
 - **Heapify**: Build a heap from an unsorted array in O(n) using bottom-up sift-down.
 
+#### Real World
+> **[Priority queues in production systems]** — Java's `PriorityQueue`, Python's `heapq`, and C++'s `priority_queue` all implement these exact operations (bubble-up on insert, sift-down on extract). They power Dijkstra's algorithm in Google Maps and task scheduling in cloud job queues like AWS SQS.
+
+#### Practice
+1. Implement a min-heap from scratch with `push` and `pop` operations. Verify that the heap property is maintained after each operation.
+2. Given a stream of integers, return the k-th largest element after each insertion. How does `push` followed by conditional `pop` maintain the invariant?
+3. Heapify (building a heap from an unsorted array) is O(n) using bottom-up sift-down, not O(n log n). Why does inserting n elements one-by-one give O(n log n) while bottom-up heapify is O(n)?
+
 ### Key Patterns
 
 **Top K Elements**: Maintain a min-heap of size K. For each element, push it in. If the heap exceeds size K, pop the smallest. At the end, the heap contains the K largest elements. Time: O(n log K).
@@ -47,11 +63,27 @@ flowchart TD
 
 **Running Median**: Maintain two heaps — a max-heap for the lower half and a min-heap for the upper half. Balance them so their sizes differ by at most one. The median is always at the top of one or both heaps.
 
+#### Real World
+> **[Financial trading systems]** — High-frequency trading platforms use running median calculations on price streams to detect outliers and trigger alerts. The two-heap approach allows O(log n) updates and O(1) median reads on tick-by-tick data arriving at millions of events per second.
+
+#### Practice
+1. Design a data structure that supports adding numbers from a stream and finding the running median at any point (Find Median from Data Stream / LeetCode 295). Use two heaps.
+2. Given a stream of integers and a window size k, return the median of each sliding window of size k (Sliding Window Median / LeetCode 480).
+3. In the two-heap approach for running median, why must you rebalance after every insertion so sizes differ by at most 1? What incorrect median does an imbalanced configuration produce?
+
 ### Implementation Notes
 
 In JavaScript and TypeScript, there is no built-in heap. You will need to implement one or use a library. The array-based representation is standard: for index i, the left child is at 2i+1, the right child at 2i+2, and the parent at floor of i-1 divided by 2.
 
 Practice recognizing when a problem needs "repeated access to the current min or max" — that is your cue to reach for a heap.
+
+#### Real World
+> **[Event-driven simulation]** — Discrete event simulators (used in network simulation tools like NS-3 and game engines) use a min-heap as an event queue: always process the event with the smallest timestamp next, enabling correct causal ordering without sorting all future events upfront.
+
+#### Practice
+1. Given n tasks with associated profits and deadlines (each task takes 1 unit of time), find the maximum total profit from scheduling tasks without exceeding their deadlines (Job Scheduling / Task Scheduler variant).
+2. Implement a `KthLargest` class that initializes with k and a list of initial numbers. Support an `add(val)` method that adds a number and returns the k-th largest element after the addition.
+3. Heapify (building a heap from an unsorted array) runs in O(n), not O(n log n). Why does the bottom-up sift-down approach achieve this, and where does the O(n log n) intuition break down?
 
 ## ELI5
 
