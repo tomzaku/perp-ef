@@ -4,6 +4,7 @@ title: Dependency Inversion Principle
 category: Design Patterns
 subcategory: SOLID
 difficulty: Medium
+priority: essential
 pattern: SOLID Principles
 companies: [Google, Meta, Amazon]
 timeComplexity: N/A - conceptual

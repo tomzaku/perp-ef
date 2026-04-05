@@ -4,6 +4,7 @@ title: Single Responsibility Principle
 category: Design Patterns
 subcategory: SOLID
 difficulty: Easy
+priority: essential
 pattern: SOLID Principles
 companies: [Google, Meta, Amazon]
 timeComplexity: N/A - conceptual

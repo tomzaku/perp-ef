@@ -14,12 +14,15 @@ const allMdModules = import.meta.glob('../content/**/*.md', {
 const questionEntries: string[] = [];
 const learningPathEntries: string[] = [];
 const backendPathEntries: string[] = [];
+const designPatternPathEntries: string[] = [];
 
 for (const [path, raw] of Object.entries(allMdModules)) {
   if (path.includes('/learning-paths/')) {
     learningPathEntries.push(raw);
   } else if (path.includes('/backend-paths/')) {
     backendPathEntries.push(raw);
+  } else if (path.includes('/design-pattern-paths/')) {
+    designPatternPathEntries.push(raw);
   } else {
     questionEntries.push(raw);
   }
@@ -49,6 +52,9 @@ export const learningPaths: LearningPathCategory[] = learningPathEntries
   .map((raw) => parseLearningPathMd(raw));
 
 export const backendPaths: LearningPathCategory[] = backendPathEntries
+  .map((raw) => parseLearningPathMd(raw));
+
+export const designPatternPaths: LearningPathCategory[] = designPatternPathEntries
   .map((raw) => parseLearningPathMd(raw));
 
 export const studyPlan: StudyPlanItem[] = studyPlanData as StudyPlanItem[];

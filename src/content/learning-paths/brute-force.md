@@ -16,7 +16,7 @@ keyInsights:
   - Pruning is the key optimization — eliminate invalid branches ASAP
   - Sort input first to enable better pruning and duplicate skipping
   - "Track state with sets/arrays, undo changes when backtracking"
-questionIds: [algo-brute-1, algo-brute-2, algo-brute-3, algo-brute-4, algo-brute-5, algo-brute-6, algo-brute-7, algo-47]
+questionIds: [algo-brute-1, algo-brute-2, algo-brute-3, algo-brute-4, algo-brute-5, algo-brute-6, algo-brute-7, algo-47, algo-90]
 ---
 
 ## Brute Force and Backtracking: The Choice-Explore-Unchoose Framework

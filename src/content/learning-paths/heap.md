@@ -10,7 +10,7 @@ keyInsights:
   - Max-heap of size K finds the K-th smallest element
   - Two heaps (max-heap + min-heap) solve running median
   - "Heap operations are O(log n), building a heap is O(n)"
-questionIds: [algo-36, algo-37, algo-38]
+questionIds: [algo-36, algo-37, algo-38, algo-89]
 ---
 
 ## Heap and Priority Queue: Always Know the Extreme

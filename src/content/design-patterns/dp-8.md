@@ -4,6 +4,7 @@ title: Abstract Classes vs Interfaces
 category: Design Patterns
 subcategory: OOP
 difficulty: Medium
+priority: good-to-know
 pattern: OOP Fundamentals
 companies: [Microsoft, Google]
 timeComplexity: N/A - conceptual

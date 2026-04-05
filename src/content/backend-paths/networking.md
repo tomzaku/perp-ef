@@ -2,16 +2,19 @@
 slug: networking
 title: "Networking Fundamentals"
 icon: "NT"
-description: "Networking is the backbone of all distributed systems. Understanding TCP/UDP, DNS, sockets, proxies, and the full request lifecycle is essential for debugging connectivity issues, designing scalable architectures, and acing backend interviews."
-pattern: "Start with transport protocols (TCP vs UDP) to understand reliability vs speed tradeoffs. Learn DNS resolution for domain-to-IP translation. Understand sockets as the fundamental communication abstraction. Study proxies and VPNs for infrastructure design. Finally, trace the complete journey of a URL from browser to server to understand how all pieces fit together."
-whenToUse: [Debugging network connectivity issues, Designing API communication patterns, Choosing between TCP and UDP, Setting up reverse proxies and load balancers, Answering "what happens when you type a URL" interview questions]
+description: "Networking is the backbone of all distributed systems. Understanding TCP/UDP, DNS, sockets, proxies, Protobuf, gRPC, and MQTT is essential for debugging connectivity issues, designing scalable architectures, and choosing the right communication protocol for every layer of your system."
+pattern: "Start with transport protocols (TCP vs UDP) to understand reliability vs speed tradeoffs. Learn DNS resolution for domain-to-IP translation. Understand sockets as the fundamental communication abstraction. Study proxies and VPNs for infrastructure design. Then move up the stack: Protobuf for efficient binary serialization, gRPC for high-performance service-to-service RPC, and MQTT for lightweight pub/sub on IoT and constrained networks."
+whenToUse: [Debugging network connectivity issues, Designing API communication patterns, Choosing between TCP and UDP, Setting up reverse proxies and load balancers, Answering "what happens when you type a URL" interview questions, Picking between REST vs gRPC vs MQTT for a new service, Designing IoT device communication, Evolving service schemas without breaking clients]
 keyInsights:
   - TCP provides reliable ordered delivery; UDP trades reliability for speed
   - The 3-way handshake establishes synchronized sequence numbers for reliable communication
   - DNS is hierarchical and heavily cached at every level
   - Sockets handle multiple clients on one port via unique 4-tuples
   - Reverse proxies are essential production infrastructure for SSL, caching, and load balancing
-questionIds: [be-21, be-22, be-23, be-24, be-25, be-26]
+  - Protobuf encodes field numbers not names — renaming is safe, reusing a number is catastrophic
+  - gRPC multiplexes many RPCs over one HTTP/2 connection and supports 4 streaming patterns
+  - MQTT QoS levels (0/1/2) and persistent sessions handle unreliable IoT networks
+questionIds: [be-21, be-22, be-23, be-24, be-25, be-26, be-45, be-46, be-47, be-48, be-49]
 ---
 
 ## Networking Fundamentals
@@ -66,6 +69,42 @@ Sockets are the fundamental abstraction for network communication. A server hand
 2. Given a company where engineers need access to internal staging environments from home, would you use a VPN or a reverse proxy to provide that access, and what is the key architectural difference between the two?
 3. What are the security and performance benefits of terminating SSL at the reverse proxy layer rather than passing encrypted traffic directly to application servers?
 
+### Binary Serialization (Protobuf)
+
+**Protocol Buffers (Protobuf)** is Google's binary serialization format — a schema-first alternative to JSON. A `.proto` file defines message types using numbered fields; generated code handles encoding and decoding in any supported language. Because the wire format uses **field numbers** (not names), messages are 3–10x smaller than JSON and 5–10x faster to parse. The schema also enables safe evolution: adding a field with a new number is always backward-compatible, but reusing a number is catastrophic — old readers will silently misinterpret the bytes.
+
+#### Real World
+> **Uber** — Uber's backend processes millions of location updates and pricing calculations per second. Switching internal service communication from JSON to Protobuf reduced payload sizes by ~60% and cut serialization CPU overhead significantly, improving p99 latency across their microservice mesh without any changes to business logic.
+
+#### Practice
+1. You add a new `phone_number` field (field number 7) to a User protobuf message. An old service that doesn't know about field 7 receives a message containing it. What happens? Now what if you reused field number 4 (previously `nickname`, now removed) for `phone_number`? What breaks and why?
+2. Given a system sending 50,000 price updates per second, explain the performance case for Protobuf over JSON, covering wire size, parse time, and memory allocation differences.
+3. Why does proto3 require all enum values to start at 0, and what is the semantic meaning of that 0 value in terms of schema evolution?
+
+### gRPC
+
+**gRPC** is an RPC framework built on HTTP/2 and Protobuf. Where REST uses URLs and HTTP verbs, gRPC uses `.proto` service definitions that compile into type-safe client stubs and server skeletons. HTTP/2 provides **multiplexing** (many concurrent RPCs over one TCP connection), header compression, and native streaming — enabling gRPC's four communication patterns: unary (like REST), server streaming, client streaming, and bidirectional streaming. **Interceptors** handle cross-cutting concerns (auth, logging, tracing) as clean middleware. The main limitation: browsers can't speak gRPC directly — a grpc-web proxy (e.g., Envoy) is required.
+
+#### Real World
+> **Netflix** — After evaluating gRPC for inter-service calls, Netflix found strongly-typed Protobuf contracts caught integration bugs at compile time instead of production. Their service mesh now uses gRPC for the bulk of internal traffic, with generated stubs keeping dozens of polyglot services in sync without manual client maintenance.
+
+#### Practice
+1. A data pipeline service needs to upload 10GB log files to a processing service. Which gRPC streaming pattern would you use, and what advantages does it have over a single REST multipart upload?
+2. Given a live auction platform where the server pushes price updates to thousands of bidders while each bidder can also send bids, which gRPC streaming pattern fits? What connection lifecycle challenges arise at scale?
+3. Why can't browsers use gRPC directly, and what is the grpc-web + Envoy proxy solution? What tradeoffs does it introduce?
+
+### MQTT & Real-Time Protocols
+
+**MQTT** is a lightweight pub/sub protocol designed for constrained devices and unreliable networks. A central **broker** routes messages between publishers and subscribers using hierarchical **topics** (e.g., `sensors/factory/+/temperature`). Three **QoS levels** control delivery guarantees: QoS 0 (fire-and-forget), QoS 1 (at-least-once, retries until PUBACK), QoS 2 (exactly-once, 4-way handshake). **Persistent sessions** let devices reconnect after outages and receive all queued messages — something neither WebSocket nor SSE offers natively. For browser clients, **WebSocket** (full-duplex, DIY pub/sub) and **SSE** (server-push only, simpler) are the alternatives.
+
+#### Real World
+> **AWS IoT Core** — Amazon's IoT platform uses MQTT as its primary device protocol, managing hundreds of millions of device connections. The combination of MQTT's 2-byte fixed header, QoS delivery guarantees, and persistent sessions makes fleet-wide firmware updates reliable even on spotty networks — a QoS 1 command is queued by the broker and delivered when each device reconnects.
+
+#### Practice
+1. A fleet of 50,000 factory sensors reports temperature every 5 seconds; some lose connectivity for minutes. Design the MQTT topic structure, QoS selection per message type, and session persistence strategy. What QoS should the server use for firmware update commands?
+2. You need exactly one worker to process each MQTT message (not fan-out to all subscribers). How do MQTT 5 shared subscriptions (`$share/group/topic`) solve this, and what is the analogous concept in Kafka?
+3. Compare WebSocket, SSE, and MQTT for a browser-based live dashboard: which would you choose and why? How does the scaling model differ between WebSocket (stateful connections) and MQTT (broker cluster)?
+
 ```mermaid
 flowchart TD
     A[Browser] --> B[DNS Resolution]
@@ -75,6 +114,12 @@ flowchart TD
     E --> F[Reverse Proxy/LB]
     F --> G[Application Server]
     G --> H[Response]
+
+    I[Microservice A] -->|gRPC + Protobuf / HTTP2| J[Microservice B]
+
+    K[IoT Sensor] -->|MQTT QoS 1| L[MQTT Broker]
+    L --> M[Subscriber: Dashboard]
+    L --> N[Subscriber: Alert Service]
 ```
 
 ## ELI5
@@ -86,6 +131,12 @@ flowchart TD
 **Sockets** are like phone lines at a business. One phone number, but the receptionist transfers each caller to their own line.
 
 **A reverse proxy** is like a restaurant host — customers talk to the host, who routes them to the right table (server).
+
+**Protobuf** is a secret codebook both sides agree on before talking — instead of writing "name=Alice" you write "2:Alice" because you both know field 2 means name. Shorter, faster, but you need the codebook.
+
+**gRPC** is a super-fast intercom between rooms. You press the button for the right room (service), speak in shorthand (Protobuf), and can hold a full two-way conversation (streaming), not just send one message.
+
+**MQTT** is a walkie-talkie relay station. Devices broadcast on channels (topics), the relay (broker) delivers to everyone tuned in — and saves messages for devices that went offline briefly.
 
 ## Poem
 
@@ -114,4 +165,28 @@ Socket Server Pattern:
 Reverse Proxy Config (Nginx):
   upstream backend { server 10.0.0.1:3000; server 10.0.0.2:3000; }
   server { listen 443 ssl; proxy_pass http://backend; }
+
+Protobuf Field Evolution Rules:
+  Add field (new number)   → safe
+  Remove field             → reserve the number + name
+  Rename field             → safe (wire uses numbers)
+  Change field type        → BREAKING
+  Reuse field number       → CATASTROPHIC (silent corruption)
+
+gRPC Streaming Patterns:
+  Unary:              rpc M(Req)          returns (Resp)
+  Server streaming:   rpc M(Req)          returns (stream Resp)
+  Client streaming:   rpc M(stream Req)   returns (Resp)
+  Bidirectional:      rpc M(stream Req)   returns (stream Resp)
+
+MQTT QoS:
+  QoS 0: PUBLISH (no ACK — may lose)
+  QoS 1: PUBLISH → PUBACK (retry — may duplicate)
+  QoS 2: PUBLISH → PUBREC → PUBREL → PUBCOMP (exactly once)
+
+Real-Time Protocol Selection:
+  Internal high-throughput RPC  → gRPC + Protobuf
+  Browser bidirectional          → WebSocket
+  Browser server-push only       → SSE
+  IoT / constrained devices      → MQTT
 ```

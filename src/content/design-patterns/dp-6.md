@@ -4,6 +4,7 @@ title: "Encapsulation, Abstraction, Inheritance, Polymorphism"
 category: Design Patterns
 subcategory: OOP
 difficulty: Easy
+priority: essential
 pattern: OOP Fundamentals
 companies: [Google, Amazon, Meta]
 timeComplexity: N/A - conceptual

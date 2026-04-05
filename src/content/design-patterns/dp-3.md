@@ -4,6 +4,7 @@ title: Liskov Substitution Principle
 category: Design Patterns
 subcategory: SOLID
 difficulty: Medium
+priority: good-to-know
 pattern: SOLID Principles
 companies: [Google, Microsoft]
 timeComplexity: N/A - conceptual

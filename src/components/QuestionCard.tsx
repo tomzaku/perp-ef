@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
+import { PriorityBadge } from './PriorityBadge';
 import { CompanyTag } from './CompanyTag';
 import { useAuth } from '../hooks/useAuth';
 import { useTagsStore } from '../hooks/useTags';
@@ -65,6 +66,7 @@ export function QuestionCard({
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="text-xs font-code text-text-muted">{question.id}</span>
             <DifficultyBadge difficulty={question.difficulty} />
+            {question.priority && <PriorityBadge priority={question.priority} />}
             <span className="text-xs text-text-muted px-1.5 py-0.5 bg-bg-tertiary rounded">
               {question.pattern}
             </span>

@@ -1,4 +1,4 @@
-import type { Question, Example, Category, Difficulty, TestConfig } from '../types/question.ts';
+import type { Question, Example, Category, Difficulty, Priority, TestConfig } from '../types/question.ts';
 import { parseFrontmatter } from './parseFrontmatter.ts';
 import { validators } from './validators.ts';
 
@@ -113,6 +113,7 @@ export function parseQuestionMd(raw: string): ParsedQuestion {
       category: fm.category as Category,
       subcategory: fm.subcategory as string,
       difficulty: fm.difficulty as Difficulty,
+      priority: (fm.priority as Priority) || undefined,
       pattern: fm.pattern as string,
       companies: (fm.companies as string[]) ?? [],
       timeComplexity: fm.timeComplexity as string,

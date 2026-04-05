@@ -4,6 +4,7 @@ title: Composition vs Inheritance
 category: Design Patterns
 subcategory: OOP
 difficulty: Medium
+priority: essential
 pattern: OOP Fundamentals
 companies: [Google, Meta, Amazon]
 timeComplexity: N/A - conceptual

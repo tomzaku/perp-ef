@@ -31,12 +31,15 @@ export interface TestConfig {
 export type DataStructureType = 'primitive' | 'array' | 'linkedList' | 'tree' | 'matrix';
 export type ArgType = DataStructureType | 'linkedListCycle';
 
+export type Priority = 'essential' | 'good-to-know' | 'nice-to-know';
+
 export interface Question {
   id: string;
   title: string;
   category: Category;
   subcategory: string;
   difficulty: Difficulty;
+  priority?: Priority;
   companies: string[];
   description: string;
   examples?: Example[];

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useId, useState } from 'react';
+import { useEffect, useRef, useId, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -59,6 +59,7 @@ function MermaidBlock({ chart, theme }: { chart: string; theme: 'dark' | 'light'
   const uniqueId = useId().replace(/:/g, '_');
   const [svgHtml, setSvgHtml] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +82,9 @@ function MermaidBlock({ chart, theme }: { chart: string; theme: 'dark' | 'light'
         try {
           const { svg } = await mermaid.render(`mermaid_${uniqueId}_${theme}`, chart, tempDiv);
           if (!cancelled) {
-            setSvgHtml(svg);
+            // Strip Mermaid's inline max-width so CSS can control sizing in the expanded modal
+            const responsive = svg.replace(/style="([^"]*?)max-width\s*:\s*[^;]+;?\s*/g, 'style="$1');
+            setSvgHtml(responsive);
             setError(false);
           }
         } finally {
@@ -95,6 +98,23 @@ function MermaidBlock({ chart, theme }: { chart: string; theme: 'dark' | 'light'
     render();
     return () => { cancelled = true; };
   }, [chart, uniqueId, theme]);
+
+  const closeOnEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setExpanded(false);
+  }, []);
+
+  useEffect(() => {
+    if (expanded) {
+      document.addEventListener('keydown', closeOnEscape);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.body.style.overflow = '';
+    };
+  }, [expanded, closeOnEscape]);
 
   if (error) {
     return (
@@ -113,11 +133,56 @@ function MermaidBlock({ chart, theme }: { chart: string; theme: 'dark' | 'light'
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="my-3 p-4 bg-bg-primary border border-border rounded-lg overflow-x-auto flex justify-center [&_svg]:max-w-full"
-      dangerouslySetInnerHTML={{ __html: svgHtml }}
-    />
+    <>
+      {/* Inline diagram */}
+      <div
+        ref={containerRef}
+        className="relative group my-3 p-4 bg-bg-primary border border-border rounded-lg overflow-x-auto flex justify-center [&_svg]:max-w-full cursor-zoom-in"
+        onClick={() => setExpanded(true)}
+      >
+        <div dangerouslySetInnerHTML={{ __html: svgHtml }} />
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-bg-secondary/90 border border-border text-[11px] text-text-muted">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+            Expand
+          </div>
+        </div>
+      </div>
+
+      {/* Fullscreen modal */}
+      {expanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="relative bg-bg-primary border border-border rounded-xl p-8 w-[92vw] max-h-[88vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setExpanded(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all cursor-pointer"
+              aria-label="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            {/* Force SVG to fill the modal width */}
+            <div
+              className="[&_svg]:!w-full [&_svg]:!h-auto"
+              dangerouslySetInnerHTML={{ __html: svgHtml }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

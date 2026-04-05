@@ -4,6 +4,7 @@ title: Singleton Pattern
 category: Design Patterns
 subcategory: Creational Patterns
 difficulty: Easy
+priority: essential
 pattern: Creational Patterns
 companies: [Amazon, Google]
 timeComplexity: O(1) for instance access

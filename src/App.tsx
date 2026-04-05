@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import type { Question } from './types/question';
-import { allQuestions, studyPlan, learningPaths, backendPaths } from './data';
+import { allQuestions, studyPlan, learningPaths, backendPaths, designPatternPaths } from './data';
 import { useProgress } from './hooks/useProgress';
 import { useNotes } from './hooks/useNotes';
 import { useTheme } from './hooks/useTheme';
@@ -12,6 +12,7 @@ import { StudyPlanView } from './components/StudyPlanView';
 import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
 import { PathList, PathDetail, SectionDetail } from './components/LearningPathView';
+import { DesignPatternMindMap } from './components/DesignPatternMindMap';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
@@ -228,14 +229,44 @@ function App() {
               />
             }
           />
+          {/* Design Patterns - Learning Paths */}
           <Route
             path="/design-patterns"
             element={
-              <QuestionListPage
-                title="Design Patterns"
-                description="OOP principles, SOLID, and Gang of Four patterns applied to JavaScript and frontend code."
-                questions={questionsByCategory['Design Patterns'] || []}
+              <PathList
+                paths={designPatternPaths}
+                questions={allQuestions}
+                basePath="/design-patterns"
+                title="Design Patterns Learning Paths"
+                subtitle="OOP fundamentals, SOLID principles, and Gang of Four patterns — learn the concepts before tackling the questions."
+                mindMap={<DesignPatternMindMap basePath="/design-patterns" />}
                 {...sharedProps}
+              />
+            }
+          />
+          <Route
+            path="/design-patterns/path/:slug"
+            element={
+              <PathDetail
+                paths={designPatternPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/design-patterns"
+                title="Design Patterns Learning Paths"
+                subtitle=""
+              />
+            }
+          />
+          <Route
+            path="/design-patterns/path/:slug/section/:sectionSlug"
+            element={
+              <SectionDetail
+                paths={designPatternPaths}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/design-patterns"
+                title=""
+                subtitle=""
               />
             }
           />

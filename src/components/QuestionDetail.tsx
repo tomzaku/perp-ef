@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question, NoteVersion } from '../types/question';
 import { DifficultyBadge } from './DifficultyBadge';
+import { PriorityBadge } from './PriorityBadge';
 import { CompanyTag } from './CompanyTag';
 import { CodeBlock } from './CodeBlock';
 import { NotesSection } from './NotesSection';
@@ -97,6 +98,7 @@ export function QuestionDetail({
         <div className="flex items-center gap-2 flex-wrap mb-3">
           <span className="text-xs font-code text-text-muted">{question.id}</span>
           <DifficultyBadge difficulty={question.difficulty} />
+          {question.priority && <PriorityBadge priority={question.priority} />}
           <span className="text-xs text-accent-purple bg-accent-purple/10 px-2 py-0.5 rounded border border-accent-purple/20">
             {question.pattern}
           </span>

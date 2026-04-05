@@ -4,6 +4,7 @@ title: Interface Segregation Principle
 category: Design Patterns
 subcategory: SOLID
 difficulty: Medium
+priority: good-to-know
 pattern: SOLID Principles
 companies: [Amazon, Google]
 timeComplexity: N/A - conceptual
