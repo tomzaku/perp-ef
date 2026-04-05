@@ -12,7 +12,7 @@ import { StudyPlanView } from './components/StudyPlanView';
 import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
 import { PathList, PathDetail, SectionDetail } from './components/LearningPathView';
-import { DesignPatternMindMap } from './components/DesignPatternMindMap';
+import { LearningMindMap, DESIGN_PATTERNS_MAP, ALGORITHM_MAP, BACKEND_MAP } from './components/LearningMindMap';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
@@ -153,6 +153,7 @@ function App() {
                 basePath="/algorithm"
                 title="Algorithm Learning Paths"
                 subtitle="Master each pattern with structured introductions, templates, and curated problem sets."
+                mindMap={<LearningMindMap config={ALGORITHM_MAP} basePath="/algorithm" />}
                 {...sharedProps}
               />
             }
@@ -239,7 +240,7 @@ function App() {
                 basePath="/design-patterns"
                 title="Design Patterns Learning Paths"
                 subtitle="OOP fundamentals, SOLID principles, and Gang of Four patterns — learn the concepts before tackling the questions."
-                mindMap={<DesignPatternMindMap basePath="/design-patterns" />}
+                mindMap={<LearningMindMap config={DESIGN_PATTERNS_MAP} basePath="/design-patterns" />}
                 {...sharedProps}
               />
             }
@@ -315,6 +316,7 @@ function App() {
                 basePath="/backend"
                 title="Backend Learning Paths"
                 subtitle="Core backend fundamentals — databases, architecture, infrastructure, DevOps, and security."
+                mindMap={<LearningMindMap config={BACKEND_MAP} basePath="/backend" />}
                 {...sharedProps}
               />
             }
