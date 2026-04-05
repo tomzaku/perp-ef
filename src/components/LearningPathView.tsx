@@ -22,7 +22,7 @@ interface LearningPathViewProps {
 }
 
 function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted, toggleBookmarked, basePath, title, subtitle, mindMap }: LearningPathViewProps & { mindMap?: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState<string>(mindMap ? 'mindmap' : 'learning');
+  const [activeTab, setActiveTab] = useState<'learning' | 'questions'>('learning');
 
   // Collect all unique questions referenced by paths in this scope
   const scopeQuestions = useMemo(() => {
@@ -42,7 +42,7 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
 
   return (
     <div className="max-w-4xl">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-display font-bold text-text-primary mb-2">
           {title}
         </h1>
@@ -53,18 +53,6 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-border">
-        {mindMap && (
-          <button
-            onClick={() => setActiveTab('mindmap')}
-            className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
-              activeTab === 'mindmap'
-                ? 'border-accent-cyan text-accent-cyan'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            Mind Map
-          </button>
-        )}
         <button
           onClick={() => setActiveTab('learning')}
           className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
@@ -88,10 +76,10 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
         </button>
       </div>
 
-      {activeTab === 'mindmap' && mindMap}
-
       {activeTab === 'learning' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger">
+        <>
+          {mindMap && <div className="mb-8">{mindMap}</div>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger">
           {paths.map((path) => {
             const pathQuestions = path.questionIds
               .map((id) => questions.find((q) => q.id === id))
@@ -138,6 +126,7 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
             );
           })}
         </div>
+        </>
       )}
 
       {activeTab === 'questions' && (

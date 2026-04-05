@@ -303,16 +303,6 @@ export function Sidebar({ counts, completedCount, totalCount, isVisible }: Sideb
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Close button */}
-        <button
-          onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-primary transition-colors cursor-pointer z-10"
-          aria-label="Close menu"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
         {sidebarContent}
       </aside>
 
