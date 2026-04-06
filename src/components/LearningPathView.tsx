@@ -8,6 +8,9 @@ import { Markdown } from './Markdown';
 import { AskChatGpt } from './AskChatGpt';
 import { ReadAloud } from './ReadAloud';
 import { FilterableQuestionList } from './FilterableQuestionList';
+import { NotesSection } from './NotesSection';
+import { AuthGuard } from './AuthGuard';
+import { useNotes } from '../hooks/useNotes';
 
 interface LearningPathViewProps {
   paths: LearningPathCategory[];
@@ -146,6 +149,8 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
 function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathViewProps) {
   const { slug } = useParams<{ slug: string }>();
   const path = paths.find((p) => p.slug === slug);
+  const { getNotes, addNote, updateNote, deleteNote } = useNotes();
+  const noteId = `path:${slug}`;
 
   if (!path) {
     return (
@@ -454,32 +459,56 @@ function PathDetail({ paths, questions, isCompleted, basePath }: LearningPathVie
               </div>
             )}
           </section>
+
+          {/* Notes (mobile only) */}
+          <div className="lg:hidden mb-8">
+            <AuthGuard feature="save notes">
+              <NotesSection
+                questionId={noteId}
+                notes={getNotes(noteId)}
+                onAddNote={addNote}
+                onUpdateNote={updateNote}
+                onDeleteNote={deleteNote}
+              />
+            </AuthGuard>
+          </div>
         </div>
 
-        {/* Right Sidebar - Sections Navigation (desktop only) */}
-        {path.sections.length > 0 && (
-          <aside className="hidden lg:block w-56 shrink-0">
-            <div className="sticky top-8">
-              <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
-                Sections
-              </h3>
-              <nav className="space-y-1">
-                {path.sections.map((s, i) => (
-                  <Link
-                    key={s.slug}
-                    to={`${basePath}/path/${path.slug}/section/${s.slug}`}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all text-text-secondary hover:text-accent-cyan hover:bg-bg-hover block"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-code text-text-muted w-4 text-right shrink-0">{i + 1}.</span>
-                      <span className="truncate">{s.title}</span>
-                    </div>
-                  </Link>
-                ))}
-              </nav>
-            </div>
-          </aside>
-        )}
+        {/* Right Sidebar (desktop only) */}
+        <aside className="hidden lg:block w-56 shrink-0">
+          <div className="sticky top-8 space-y-6">
+            {path.sections.length > 0 && (
+              <div>
+                <h3 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">
+                  Sections
+                </h3>
+                <nav className="space-y-1">
+                  {path.sections.map((s, i) => (
+                    <Link
+                      key={s.slug}
+                      to={`${basePath}/path/${path.slug}/section/${s.slug}`}
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all text-text-secondary hover:text-accent-cyan hover:bg-bg-hover block"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-code text-text-muted w-4 text-right shrink-0">{i + 1}.</span>
+                        <span className="truncate">{s.title}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            )}
+            <AuthGuard feature="save notes">
+              <NotesSection
+                questionId={noteId}
+                notes={getNotes(noteId)}
+                onAddNote={addNote}
+                onUpdateNote={updateNote}
+                onDeleteNote={deleteNote}
+              />
+            </AuthGuard>
+          </div>
+        </aside>
       </div>
 
       <AskChatGpt title={path.title} description={path.description} />
