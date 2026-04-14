@@ -24,8 +24,8 @@ interface LearningPathViewProps {
   subtitle: string;
 }
 
-function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted, toggleBookmarked, basePath, title, subtitle, mindMap }: LearningPathViewProps & { mindMap?: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState<'learning' | 'questions'>('learning');
+function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted, toggleBookmarked, basePath, title, subtitle, mindMap, cheatSheet }: LearningPathViewProps & { mindMap?: React.ReactNode; cheatSheet?: React.ReactNode }) {
+  const [activeTab, setActiveTab] = useState<'learning' | 'questions' | 'cheatsheet'>('learning');
 
   // Collect all unique questions referenced by paths in this scope
   const scopeQuestions = useMemo(() => {
@@ -77,6 +77,18 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
           All Questions
           <span className="ml-1.5 text-xs text-text-muted">({scopeQuestions.length})</span>
         </button>
+        {cheatSheet && (
+          <button
+            onClick={() => setActiveTab('cheatsheet')}
+            className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'cheatsheet'
+                ? 'border-accent-cyan text-accent-cyan'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            Cheat Sheet
+          </button>
+        )}
       </div>
 
       {activeTab === 'learning' && (
@@ -142,6 +154,8 @@ function PathList({ paths, questions, isCompleted, isBookmarked, toggleCompleted
           hideCount
         />
       )}
+
+      {activeTab === 'cheatsheet' && cheatSheet}
     </div>
   );
 }

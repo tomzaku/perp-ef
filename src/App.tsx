@@ -13,6 +13,7 @@ import { QuestionDetail } from './components/QuestionDetail';
 import { QuestionListPage } from './components/QuestionListPage';
 import { PathList, PathDetail, SectionDetail } from './components/LearningPathView';
 import { LearningMindMap, DESIGN_PATTERNS_MAP, ALGORITHM_MAP, BACKEND_MAP } from './components/LearningMindMap';
+import { AlgoCheatSheet } from './components/AlgoCheatSheet';
 import { SettingsPage } from './components/SettingsPage';
 import { FabMenu } from './components/FabMenu';
 import { EnglishPractice } from './components/EnglishPractice';
@@ -154,6 +155,7 @@ function App() {
                 title="Algorithm Learning Paths"
                 subtitle="Master each pattern with structured introductions, templates, and curated problem sets."
                 mindMap={<LearningMindMap config={ALGORITHM_MAP} basePath="/algorithm" />}
+                cheatSheet={<AlgoCheatSheet basePath="/algorithm" />}
                 {...sharedProps}
               />
             }
