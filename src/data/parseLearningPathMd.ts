@@ -1,4 +1,4 @@
-import type { LearningPathCategory, ArticleSection } from '../types/question.ts';
+import type { Category, LearningPathCategory, ArticleSection } from '../types/question.ts';
 import { parseFrontmatter } from './parseFrontmatter.ts';
 
 function slugify(text: string): string {
@@ -73,6 +73,7 @@ export function parseLearningPathMd(raw: string): LearningPathCategory {
 
   return {
     slug: fm.slug as string,
+    category: (fm.category as Category) ?? 'Algorithm',
     title: fm.title as string,
     icon: fm.icon as string,
     description: fm.description as string,

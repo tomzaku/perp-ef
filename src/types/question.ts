@@ -98,6 +98,7 @@ export interface ArticleSection {
 
 export interface LearningPathCategory {
   slug: string;
+  category: Category;
   title: string;
   icon: string;
   description: string;

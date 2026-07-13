@@ -105,6 +105,9 @@ function App() {
     toggleBookmarked,
   };
 
+  const algorithmPaths = learningPaths.filter((p) => p.category === 'Algorithm');
+  const systemDesignCourses = learningPaths.filter((p) => p.category === 'System Design');
+
   return (
     <AuthProvider>
     <ThemeContext value={themeValue}>
@@ -149,7 +152,7 @@ function App() {
             path="/algorithm"
             element={
               <PathList
-                paths={learningPaths}
+                paths={algorithmPaths}
                 questions={allQuestions}
                 basePath="/algorithm"
                 title="Algorithm Learning Paths"
@@ -164,7 +167,7 @@ function App() {
             path="/algorithm/path/:slug"
             element={
               <PathDetail
-                paths={learningPaths}
+                paths={algorithmPaths}
                 questions={allQuestions}
                 isCompleted={isCompleted}
                 basePath="/algorithm"
@@ -276,11 +279,51 @@ function App() {
           <Route
             path="/system-design"
             element={
-              <QuestionListPage
-                title="System Design"
-                description="Architecture topics for frontend engineers — authentication, payments, API design, caching, and real-time systems."
-                questions={questionsByCategory['System Design'] || []}
-                {...sharedProps}
+              <>
+                {systemDesignCourses.length > 0 && (
+                  <div className="mb-10">
+                    <PathList
+                      paths={systemDesignCourses}
+                      questions={allQuestions}
+                      basePath="/system-design"
+                      title="System Design Courses"
+                      subtitle="Structured deep dives — follow the lessons in order to build understanding from the ground up."
+                      {...sharedProps}
+                    />
+                  </div>
+                )}
+                <QuestionListPage
+                  title="System Design"
+                  description="Architecture topics for frontend engineers — authentication, payments, API design, caching, and real-time systems."
+                  questions={questionsByCategory['System Design'] || []}
+                  {...sharedProps}
+                />
+              </>
+            }
+          />
+          <Route
+            path="/system-design/path/:slug"
+            element={
+              <PathDetail
+                paths={systemDesignCourses}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/system-design"
+                title="System Design Courses"
+                subtitle=""
+              />
+            }
+          />
+          <Route
+            path="/system-design/path/:slug/section/:sectionSlug"
+            element={
+              <SectionDetail
+                paths={systemDesignCourses}
+                questions={allQuestions}
+                isCompleted={isCompleted}
+                basePath="/system-design"
+                title=""
+                subtitle=""
               />
             }
           />
