@@ -140,6 +140,106 @@ export const ALGORITHM_MAP: MindMapConfig = {
   ],
 };
 
+// ─── Cheat Sheet Config ───────────────────────────────────────────────────────
+//
+// Left branches  = clue groups (non-clickable, informational text)
+// Right branches = pattern groups (children are clickable → navigate to path)
+//
+// Dimensions: 6 children → h=177, 7 children → h=200, 5 → h=157, 4 → h=137, 3 → h=117
+// Left cards  x=18, w=222  → right edge 240
+// Right cards x=500, w=248 → left edge 500
+// Gap from root to each side: 46px → bezier curves have room
+
+export const CHEAT_SHEET_MAP: MindMapConfig = {
+  viewBox: '0 0 780 640',
+  rootLabel: 'Find Pattern',
+  rootIcon: 'CS',
+  root: { x: 286, y: 292, w: 168, h: 52 },
+  hint: 'Left: spot the clue → Right: click a pattern to open its learning path',
+  branches: [
+    // ── LEFT: Clue groups ─────────────────────────────────────────────────────
+    {
+      id: 'input-clues', label: 'Input Type', icon: 'IN',
+      colorVar: 'accent-cyan', side: 'left', x: 18, y: 30, w: 222, h: 177,
+      children: [
+        { label: 'Array / String → Hash, 2ptr, SW' },
+        { label: 'Sorted Array → BinSearch / 2ptr' },
+        { label: 'Linked List → LL / 2ptr / Stack' },
+        { label: 'Tree → Trees / BFS' },
+        { label: 'Graph / Grid → Graphs / BFS' },
+        { label: 'Intervals → Greedy / Heap' },
+      ],
+    },
+    {
+      id: 'goal-clues', label: 'Output / Goal', icon: 'GT',
+      colorVar: 'accent-purple', side: 'left', x: 18, y: 218, w: 222, h: 200,
+      children: [
+        { label: 'Max / Min → DP / Greedy / Heap' },
+        { label: 'Count ways → DP' },
+        { label: 'All combos → Backtracking' },
+        { label: 'Shortest path → BFS / Graphs' },
+        { label: 'Top K → Heap' },
+        { label: 'Yes / No? → BS / 2ptr / BFS' },
+        { label: 'O(1) lookup → Hash / LinkedList' },
+      ],
+    },
+    {
+      id: 'keyword-clues', label: 'Keywords / Signals', icon: 'KW',
+      colorVar: 'accent-green', side: 'left', x: 18, y: 429, w: 222, h: 179,
+      children: [
+        { label: 'Substring / Subarray → SW' },
+        { label: 'Palindrome → 2ptr / DP' },
+        { label: 'Brackets / Parens → Stack' },
+        { label: 'Next Greater → Stack (mono)' },
+        { label: 'Cycle / Islands → LL / Graphs' },
+        { label: 'Prefix / Words → Trie' },
+        { label: 'XOR / Bits → Bit Manip' },
+      ],
+    },
+
+    // ── RIGHT: Pattern groups (children are clickable) ────────────────────────
+    {
+      id: 'cs-foundation', label: 'Foundation', icon: 'F1',
+      colorVar: 'accent-cyan', side: 'right', x: 500, y: 30, w: 248, h: 117, order: 1,
+      children: [
+        { label: 'Arrays & Hashing', slug: 'arrays-hashing' },
+        { label: 'Two Pointers', slug: 'two-pointers' },
+        { label: 'Sliding Window', slug: 'sliding-window' },
+      ],
+    },
+    {
+      id: 'cs-ds', label: 'Data Structures', icon: 'DS',
+      colorVar: 'accent-purple', side: 'right', x: 500, y: 163, w: 248, h: 137, order: 2,
+      children: [
+        { label: 'Stack', slug: 'stack' },
+        { label: 'Linked List', slug: 'linked-list' },
+        { label: 'Trees', slug: 'trees' },
+        { label: 'Heap / Priority Queue', slug: 'heap' },
+      ],
+    },
+    {
+      id: 'cs-graph', label: 'Graph Algorithms', icon: 'GR',
+      colorVar: 'accent-green', side: 'right', x: 500, y: 316, w: 248, h: 117, order: 3,
+      children: [
+        { label: 'Graphs', slug: 'graphs' },
+        { label: 'BFS / DFS', slug: 'bfs-dfs' },
+        { label: 'Trie', slug: 'trie' },
+      ],
+    },
+    {
+      id: 'cs-advanced', label: 'Advanced Techniques', icon: 'A+',
+      colorVar: 'accent-orange', side: 'right', x: 500, y: 449, w: 248, h: 157, order: 4,
+      children: [
+        { label: 'Binary Search', slug: 'binary-search' },
+        { label: 'Greedy', slug: 'greedy' },
+        { label: 'Dynamic Programming', slug: 'dynamic-programming' },
+        { label: 'Backtracking', slug: 'brute-force' },
+        { label: 'Bit Manipulation', slug: 'bit-manipulation' },
+      ],
+    },
+  ],
+};
+
 // ─── Backend Config ───────────────────────────────────────────────────────────
 
 export const BACKEND_MAP: MindMapConfig = {
